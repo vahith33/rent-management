@@ -31,7 +31,7 @@ export default function EditRoomPage() {
           <h1 className="text-[20px] font-bold text-[#1A2B28]">Edit Room</h1>
         </div>
         <div className="bg-[#EBFBF8] px-3 py-1 rounded-lg">
-            <span className="text-[10px] font-black text-[#008075] tracking-widest uppercase">Room {initialData.roomNumber}</span>
+            <span className="text-[12px] font-black text-[#008075]">Room {initialData.roomNumber}</span>
         </div>
       </header>
 
@@ -39,12 +39,12 @@ export default function EditRoomPage() {
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-1 h-6 bg-[#008075] rounded-full"></div>
-            <h2 className="text-[13px] font-bold tracking-widest text-[#1A2B28] uppercase">Room Information</h2>
+            <h2 className="text-[15px] font-bold text-[#1A2B28]">Room Information</h2>
           </div>
 
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-80">Room Number</label>
+              <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Room Number</label>
               <input 
                 type="text" 
                 defaultValue={initialData.roomNumber}
@@ -53,7 +53,7 @@ export default function EditRoomPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-80">Floor</label>
+              <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Floor</label>
               <div className="relative">
                 <select defaultValue={initialData.floor} className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none appearance-none font-medium text-[14px]">
                   <option>Ground Floor</option>
@@ -67,7 +67,7 @@ export default function EditRoomPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-80">Room Type</label>
+              <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Room Type</label>
               <div className="flex gap-4">
                 <button 
                   onClick={() => setRoomType("AC")}
@@ -89,7 +89,7 @@ export default function EditRoomPage() {
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-1 h-6 bg-[#008075] rounded-full"></div>
-            <h2 className="text-[13px] font-bold tracking-widest text-[#1A2B28] uppercase">Pricing</h2>
+            <h2 className="text-[15px] font-bold text-[#1A2B28]">Pricing</h2>
           </div>
 
           <div className="relative">
@@ -99,7 +99,7 @@ export default function EditRoomPage() {
               defaultValue={initialData.price}
               className="w-full bg-[#EEF2F8] border-none rounded-2xl pl-12 pr-24 py-5 text-[#1A2B28] font-bold text-[18px] outline-none"
             />
-            <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[#ABB3B8] text-[12px] font-bold uppercase">/ Month</div>
+            <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[#ABB3B8] text-[14px] font-bold">/ Month</div>
           </div>
         </section>
       </main>

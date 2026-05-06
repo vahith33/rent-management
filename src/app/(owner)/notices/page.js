@@ -45,7 +45,7 @@ export default function NoticesPage() {
         <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-50 space-y-8">
           {/* Category Selection */}
           <div className="space-y-4">
-            <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#ABB3B8] ml-1">Notice Category</label>
+            <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Notice Category</label>
             <div className="flex flex-wrap gap-3">
               {categories.map((cat) => (
                 <button 
@@ -61,7 +61,7 @@ export default function NoticesPage() {
 
           {/* Message Area */}
           <div className="space-y-4">
-            <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#ABB3B8] ml-1">Your Message</label>
+            <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Your Message</label>
             <div className="relative">
               <textarea 
                 value={message}
@@ -69,7 +69,7 @@ export default function NoticesPage() {
                 placeholder="Type your notice here (e.g. Maintenance scheduled for tomorrow...)"
                 className="w-full h-48 bg-[#F1F4F8] rounded-[24px] p-6 text-[15px] font-medium text-[#1A2B28] outline-none focus:bg-white focus:ring-2 focus:ring-[#008075]/20 transition-all placeholder:text-[#ABB3B8] resize-none"
               />
-              <div className="absolute bottom-4 right-6 text-[10px] font-bold text-[#ABB3B8] uppercase tracking-widest">
+              <div className="absolute bottom-4 right-6 text-[12px] font-bold text-[#ABB3B8]">
                 {message.length} Characters
               </div>
             </div>
@@ -93,13 +93,13 @@ export default function NoticesPage() {
                  </>
                )}
              </button>
-             <p className="text-center text-[10px] font-medium text-[#ABB3B8] uppercase tracking-widest">Sent via SMS & App Push Notification</p>
+             <p className="text-center text-[12px] font-medium text-[#ABB3B8]">Sent via SMS & App Push Notification</p>
           </div>
         </div>
 
         {/* Recent History (Mock) */}
         <div className="space-y-4">
-           <h3 className="text-[12px] font-bold text-[#ABB3B8] uppercase tracking-widest ml-1">Recently Sent</h3>
+           <h3 className="text-[13px] font-black text-[#1A2B28] ml-1">Recently Sent</h3>
            <div className="bg-white p-6 rounded-[28px] border border-slate-50 flex items-center justify-between shadow-sm opacity-60 grayscale-[0.5]">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
@@ -107,10 +107,10 @@ export default function NoticesPage() {
                 </div>
                 <div>
                    <p className="text-sm font-bold text-[#1A2B28]">Water Maintenance</p>
-                   <p className="text-[10px] font-bold text-[#ABB3B8] uppercase">Emergency • Yesterday, 4:30 PM</p>
+                   <p className="text-[12px] font-bold text-[#ABB3B8]">Emergency • Yesterday, 4:30 PM</p>
                 </div>
               </div>
-              <div className="text-[10px] font-black text-[#008075] uppercase tracking-widest">Delivered</div>
+              <div className="text-[12px] font-black text-[#008075]">Delivered</div>
            </div>
         </div>
       </main>

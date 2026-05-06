@@ -1,10 +1,16 @@
 "use client";
 
 import { useRouter, usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems = [
     { 
@@ -29,27 +35,29 @@ export default function BottomNav() {
     },
   ];
 
+  if (!mounted) return null;
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 px-14 py-2 flex justify-between items-center z-50 safe-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-100 px-23 py-3 flex justify-between items-center z-50 safe-bottom">
       {navItems.map((item, i) => {
         const isActive = pathname.startsWith(item.path);
         return (
           <div 
             key={i} 
             onClick={() => router.push(item.path)} 
-            className="flex flex-col items-center gap-1 cursor-pointer transition-all duration-300 relative group active:scale-90"
+            className="flex flex-col items-center gap-0.5 cursor-pointer transition-all duration-300 relative group active:scale-90"
           >
             {/* Active Highlight (Shadow) */}
             {isActive && (
               <div className="absolute -top-1 w-10 h-10 bg-[#00685F]/5 rounded-full blur-md -z-10 animate-pulse" />
             )}
             
-            <div className={`p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-[#EBFBF8] text-[#00685F] shadow-inner shadow-[#00685F]/5' : 'text-[#94A3B8]'}`}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round">
+            <div className={`p-0.5 rounded-xl transition-all duration-300 ${isActive ? 'text-[#00685F]' : 'text-[#94A3B8]'}`}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 {item.icon}
               </svg>
             </div>
-            <span className={`text-[10px] uppercase tracking-widest font-black transition-colors ${isActive ? 'text-[#00685F]' : 'text-[#94A3B8] opacity-60'}`}>
+            <span className={`text-[10.5px] font-semibold tracking-tight transition-colors ${isActive ? 'text-[#00685F]' : 'text-[#94A3B8] opacity-60'}`}>
               {item.label}
             </span>
           </div>

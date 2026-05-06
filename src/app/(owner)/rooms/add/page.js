@@ -18,7 +18,7 @@ export default function AddRoomPage() {
   if (!mounted) return <div className="min-h-screen bg-white" />;
 
   return (
-    <div className="min-h-screen bg-white pb-40 font-body">
+    <div className="min-h-screen bg-white pb-20 font-body">
       {/* Header */}
       <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-50">
         <button onClick={() => router.back()} className="text-[#00685F] active:scale-90 transition-transform">
@@ -30,7 +30,7 @@ export default function AddRoomPage() {
         <h1 className="text-xl font-black text-[#1A2B28]">Add Room</h1>
       </header>
 
-      <main className="px-4 py-8 space-y-6">
+      <main className="px-2">
         {/* ROOM INFORMATION */}
         <section className="bg-[#F8FAFB] rounded-[32px] p-5 border border-slate-50 space-y-5">
           <div className="flex items-center gap-3">
@@ -39,8 +39,8 @@ export default function AddRoomPage() {
           </div>
 
           <div className="space-y-5">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">Room Number</label>
+            <div className="space-y-3">
+              <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Room Number</label>
               <input 
                 type="text" 
                 placeholder="e.g. 102, 204B"
@@ -49,7 +49,7 @@ export default function AddRoomPage() {
             </div>
  
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">Floor</label>
+              <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Floor</label>
               <div className="relative">
                 <select className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none appearance-none font-medium text-[14px]">
                   <option>Ground Floor</option>
@@ -63,7 +63,7 @@ export default function AddRoomPage() {
             </div>
  
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">Room Type</label>
+              <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Room Type</label>
               <div className="flex gap-4">
                 <button 
                   onClick={() => setRoomType("AC")}
@@ -83,21 +83,21 @@ export default function AddRoomPage() {
         </section>
 
         {/* BED CAPACITY */}
-        <section className="bg-[#F8FAFB] rounded-[32px] p-5 border border-slate-50 space-y-5">
+        <section className="bg-[#F8FAFB] rounded-[32px] p-5 border border-slate-50 space-y-2">
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-6 bg-[#00685F] rounded-full"></div>
-            <h2 className="text-[16px] font-black text-[#1A2B28]">Bed Capacity</h2>
+            <h2 className="text-[16px] font-black text-[#1A2B28] ">Bed Capacity</h2>
           </div>
  
           <div className="space-y-5">
             <div className="space-y-3">
-              <label className="text-[10px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">Sharing Type</label>
+              <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Sharing Type</label>
               <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
                 {["2-Sharing", "3-Sharing", "4-Sharing"].map(type => (
                   <button 
                     key={type}
                     onClick={() => setSharingType(type)}
-                    className={`px-6 py-3 rounded-full font-bold whitespace-nowrap transition-all border-2 ${sharingType === type ? 'bg-[#00685F] text-white border-[#00685F]' : 'bg-white text-[#718096] border-slate-100 shadow-sm'}`}
+                    className={`px-4 py-2 rounded-full text-[13px] font-bold whitespace-nowrap transition-all border-2 ${sharingType === type ? 'bg-[#00685F] text-white border-[#00685F]' : 'bg-white text-[#718096] border-slate-100 shadow-sm'}`}
                   >
                     {type}
                   </button>
@@ -108,7 +108,7 @@ export default function AddRoomPage() {
             <div className="bg-white p-5 rounded-[26px] border-2 border-[#EBFBF8] flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-[15px] font-bold text-[#1A2B28]">Total Beds</span>
-                <span className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest mt-1">Available per room</span>
+                <span className="text-[10px] font-black text-[#718096]">Available per room</span>
               </div>
               <div className="flex items-center gap-5">
                 <button 
@@ -128,7 +128,7 @@ export default function AddRoomPage() {
             </div>
  
             <div className="space-y-3 pt-2">
-              <label className="text-[10px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">Bed Identification</label>
+              <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Bed Identification</label>
               <div className="grid grid-cols-2 gap-3">
                 {Array.from({ length: bedCount }).map((_, i) => (
                    <div key={i} className="bg-white p-4 rounded-[22px] border border-slate-50 flex items-center gap-4 shadow-sm">
@@ -140,7 +140,7 @@ export default function AddRoomPage() {
                          </svg>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[8px] font-bold text-[#ABB3B8] uppercase">Bed {i+1}</span>
+                        <span className="text-[10px] font-bold text-[#718096]">Bed {i+1}</span>
                         <span className="text-sm font-bold text-[#1A2B28]">102-{String.fromCharCode(65 + i)}</span>
                       </div>
                    </div>
@@ -164,7 +164,7 @@ export default function AddRoomPage() {
               placeholder="0.00"
               className="w-full bg-[#EEF2F8] border-none rounded-2xl pl-12 pr-24 py-5 text-[#1A2B28] font-bold text-[18px] outline-none"
             />
-            <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[#ABB3B8] text-[12px] font-bold uppercase">/ Month</div>
+            <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[#718096] text-[14px] font-bold">/ Month</div>
           </div>
         </section>
  
@@ -213,14 +213,14 @@ export default function AddRoomPage() {
              </div>
              <div className="text-center">
                 <p className="text-[16px] font-bold text-[#1A2B28]">Upload Images</p>
-                <p className="text-[11px] font-bold text-[#ABB3B8] uppercase tracking-widest mt-1">PNG, JPG up to 10MB</p>
+                <p className="text-[13px] font-bold text-[#718096] mt-1">PNG, JPG up to 10MB</p>
              </div>
           </div>
         </section>
       </main>
 
       {/* Footer Action */}
-      <footer className="px-4 pt-10 pb-20 flex gap-4">
+      <footer className="px-4 pt-10 pb-10 flex gap-4">
         <button 
           onClick={() => router.back()}
           className="flex-1 bg-[#EEF2F8] py-5 rounded-[20px] text-[#1A2B28] font-bold text-[16px] hover:bg-slate-200 transition-colors"

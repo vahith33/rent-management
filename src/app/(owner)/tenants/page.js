@@ -47,6 +47,7 @@ export default function TenantsPage() {
   const [mounted, setMounted] = useState(false);
   const [view, setView] = useState("menu"); // "menu", "list", "detail"
   const [selectedTenant, setSelectedTenant] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -99,18 +100,18 @@ export default function TenantsPage() {
                     <span className="text-sm font-medium">{selectedTenant.room}</span>
                  </div>
                  <div className="bg-[#EBFBF8] px-6 py-1.5 rounded-full">
-                    <span className="text-[10px] font-black text-[#008075] tracking-widest uppercase">{selectedTenant.status}</span>
+                    <span className="text-[12px] font-black text-[#008075]">{selectedTenant.status}</span>
                  </div>
               </div>
 
               {/* Stats Row */}
               <div className="flex gap-4">
                  <div className="flex-1 bg-white p-5 rounded-2xl border-l-4 border-[#00685F] shadow-sm">
-                    <p className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest mb-1">Monthly Rent</p>
+                    <p className="text-[12px] font-bold text-[#718096] mb-1">Monthly Rent</p>
                     <p className="text-lg font-black text-[#1A2B28]">{selectedTenant.rent}</p>
                  </div>
                  <div className="flex-1 bg-white p-5 rounded-2xl border-l-4 border-[#00B4D8] shadow-sm">
-                    <p className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest mb-1">Security Deposit</p>
+                    <p className="text-[12px] font-bold text-[#718096] mb-1">Security Deposit</p>
                     <p className="text-lg font-black text-[#1A2B28]">{selectedTenant.deposit}</p>
                  </div>
               </div>
@@ -126,7 +127,7 @@ export default function TenantsPage() {
                  <div className="space-y-6 pt-2">
                     <div className="flex items-center justify-between">
                        <div>
-                          <p className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest mb-0.5">PHONE</p>
+                           <p className="text-[12px] font-bold text-[#718096] mb-0.5">Phone</p>
                           <p className="text-sm font-bold text-[#1A2B28]">{selectedTenant.phone}</p>
                        </div>
                        <div className="text-[#008075]">
@@ -135,7 +136,7 @@ export default function TenantsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                        <div>
-                          <p className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest mb-0.5">EMAIL</p>
+                          <p className="text-[12px] font-bold text-[#718096] mb-0.5">Email</p>
                           <p className="text-sm font-bold text-[#1A2B28]">{selectedTenant.email}</p>
                        </div>
                        <div className="text-[#008075]">
@@ -143,14 +144,14 @@ export default function TenantsPage() {
                        </div>
                     </div>
                     <div>
-                       <p className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest mb-1.5">GOV ID</p>
+                       <p className="text-[12px] font-bold text-[#718096] mb-1.5">Gov Id</p>
                        <div className="flex items-center gap-3">
                           <span className="text-sm font-bold text-[#1A2B28]">{selectedTenant.govId}</span>
                           <div className="bg-[#EBFBF8] px-2 py-0.5 rounded flex items-center gap-1">
                              <div className="bg-[#008075] rounded-full p-0.5">
                                 <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                              </div>
-                             <span className="text-[8px] font-black text-[#008075] uppercase tracking-wider">VERIFIED</span>
+                             <span className="text-[10px] font-black text-[#008075]">Verified</span>
                           </div>
                        </div>
                     </div>
@@ -167,11 +168,11 @@ export default function TenantsPage() {
                  </div>
                  <div className="grid grid-cols-2 gap-8 pt-2">
                     <div>
-                       <p className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest mb-1">MOVE-IN DATE</p>
+                       <p className="text-[12px] font-bold text-[#718096] mb-1">Move-in Date</p>
                        <p className="text-sm font-bold text-[#1A2B28]">{selectedTenant.moveIn}</p>
                     </div>
                     <div>
-                       <p className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest mb-1">AGREEMENT PERIOD</p>
+                       <p className="text-[12px] font-bold text-[#718096] mb-1">Agreement Period</p>
                        <p className="text-sm font-bold text-[#1A2B28]">{selectedTenant.period}</p>
                     </div>
                  </div>
@@ -186,7 +187,7 @@ export default function TenantsPage() {
                        </div>
                        <h3 className="font-bold text-base text-[#1A2B28]">Payment History</h3>
                     </div>
-                    <button className="text-[10px] font-black text-[#00685F] uppercase tracking-widest hover:underline transition-all">VIEW ALL</button>
+                    <button className="text-[12px] font-black text-[#00685F] hover:underline transition-all">View All</button>
                  </div>
                  
                  <div className="space-y-6 pt-2">
@@ -202,12 +203,12 @@ export default function TenantsPage() {
                              </div>
                              <div>
                                 <p className="text-sm font-bold text-[#1A2B28]">{payment.month}</p>
-                                <p className="text-[10px] font-medium text-[#ABB3B8]">{payment.date}</p>
+                                <p className="text-[10px] font-medium text-[#718096]">{payment.date}</p>
                              </div>
                           </div>
                           <div className="text-right">
                              <p className="text-sm font-bold text-[#1A2B28]">{selectedTenant.rent}</p>
-                             <span className="text-[8px] font-black text-[#008075] uppercase tracking-widest">PAID</span>
+                             <span className="text-[10px] font-black text-[#008075]">Paid</span>
                           </div>
                        </div>
                     ))}
@@ -236,7 +237,7 @@ export default function TenantsPage() {
                              </div>
                              <span className="text-sm font-bold text-[#1A2B28]">{doc.name}</span>
                           </div>
-                          <button className="text-[#ABB3B8] hover:text-[#008075] transition-colors">
+                          <button className="text-[#718096] hover:text-[#008075] transition-colors">
                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                           </button>
                        </div>
@@ -267,53 +268,100 @@ export default function TenantsPage() {
   // ==========================================
   // VIEW: TENANT LIST
   // ==========================================
+  const filteredTenants = tenants.filter(t => 
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    t.room.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (view === "list") {
     return (
-       <div className="min-h-screen bg-white animate-in fade-in duration-500 font-body pb-32">
-          <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-50">
-             <button onClick={() => router.push('/tenants')} className="text-[#00685F] active:scale-90 transition-transform">
+       <div className="min-h-screen bg-[#F8FAFB] animate-in fade-in duration-500 font-body pb-32">
+          <header className="px-4 py-6 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-100 shadow-sm">
+             <button onClick={() => router.push('/tenants')} className="p-2 hover:bg-[#F1F4F8] rounded-full transition-colors text-[#00685F]">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
              </button>
              <div className="flex flex-col">
                 <h1 className="text-xl font-black text-[#1A2B28]">Resident List</h1>
-                <span className="text-[10px] font-bold text-[#008075] uppercase tracking-widest mt-0.5">{tenants.length} Total Tenants</span>
+                <span className="text-[12px] font-bold text-[#008075] mt-0.5">{tenants.length} Total Tenants</span>
              </div>
           </header>
 
-          <main className="p-4 space-y-3">
-             {tenants.map((tenant) => (
-                <div key={tenant.id} className="bg-[#F8FAFB] rounded-[28px] p-5 border border-slate-50 space-y-5">
-                   <div className="flex items-center justify-between">
-                      <button 
-                        onClick={() => router.push(`?view=detail&id=${tenant.id}`)}
-                        className="flex items-center gap-4 text-left group"
-                      >
-                         <div className={`w-12 h-12 ${tenant.id === 1 ? 'bg-[#00675B]' : 'bg-slate-200'} rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 shadow-sm`}>
-                            <span className={`text-lg font-black ${tenant.id === 1 ? 'text-white' : 'text-slate-500'}`}>{tenant.initials}</span>
-                         </div>
-                         <div className="flex flex-col">
-                            <span className="text-[17px] font-black text-[#1A2B28] group-hover:text-[#00685F] transition-colors">{tenant.name}</span>
-                            <span className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest mt-0.5">{tenant.room} • {tenant.floor}</span>
-                         </div>
-                      </button>
-                      <a href={`tel:${tenant.phone.replace(/ /g, '')}`} className="bg-white p-3 rounded-xl text-[#008075] border border-slate-50 hover:bg-[#EBFBF8] shadow-sm transition-all active:scale-90">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                      </a>
-                   </div>
- 
-                   <div className="flex items-center justify-between pt-4 border-t border-slate-200/50">
-                      <div className="flex flex-col">
-                         <span className="text-[8px] font-bold text-[#ABB3B8] uppercase tracking-widest">Monthly Rent</span>
-                         <span className="text-xl font-black text-[#00685F] mt-0.5">{tenant.rent}</span>
-                      </div>
-                      <div className={`px-4 py-1.5 rounded-full text-[8px] font-black tracking-widest ${
-                        tenant.status === 'ACTIVE' ? 'bg-[#EBFBF8] text-[#008075]' : 'bg-orange-50 text-orange-600'
-                      }`}>
-                         {tenant.status}
-                      </div>
-                   </div>
+          <main className="px-6 py-8 space-y-8">
+             <div className="space-y-2">
+                <h2 className="text-[22px] font-bold text-[#1A2B28] font-heading">Tenant Directory</h2>
+                <p className="text-[14px] font-medium text-[#718096]">Manage and connect with your residents</p>
+             </div>
+
+             {/* Search Bar */}
+             <div className="relative group">
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#ADB5BD] group-focus-within:text-[#008075] transition-colors">
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </div>
-             ))}
+                <input 
+                   type="text" 
+                   placeholder="Search by name or room..." 
+                   value={searchQuery}
+                   onChange={(e) => setSearchQuery(e.target.value)}
+                   className="w-full bg-white pl-14 pr-6 py-5 rounded-[24px] border border-slate-200 outline-none focus:ring-2 focus:ring-[#008075]/20 focus:border-[#008075] transition-all text-[14px] font-medium text-[#1A2B28] shadow-sm"
+                />
+             </div>
+
+             <div className="space-y-4">
+                <h3 className="text-[20px] font-bold text-[#1A2B28] font-heading">Active Residents ({filteredTenants.length})</h3>
+                
+                <div className="grid gap-4">
+                   {filteredTenants.map((tenant) => (
+                      <div key={tenant.id} className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm space-y-4 group hover:border-[#008075]/30 transition-all active:scale-[0.99]">
+                         <div className="flex items-center justify-between">
+                            <button 
+                               onClick={() => router.push(`?view=detail&id=${tenant.id}`)}
+                               className="flex items-center gap-4 text-left"
+                            >
+                               <div className="w-11 h-11 bg-[#00685F] text-white rounded-2xl flex items-center justify-center shadow-sm">
+                                  <span className="text-[14px] font-bold">{tenant.initials}</span>
+                               </div>
+                               <div className="flex flex-col">
+                                  <span className="text-[16px] font-black text-[#1A2B28]">{tenant.name}</span>
+                                  <span className="text-[12px] font-bold text-[#718096] mt-0.5">Resident</span>
+                               </div>
+                            </button>
+                            <a 
+                               href={`tel:${tenant.phone.replace(/ /g, '')}`} 
+                               className="bg-[#EBFBF8] p-2.5 rounded-xl text-[#008075] hover:bg-[#008075] hover:text-white transition-all active:scale-90 shadow-sm"
+                            >
+                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            </a>
+                         </div>
+
+                         <div className="grid grid-cols-3 pt-3 border-t border-slate-50">
+                            <div className="flex flex-col items-start">
+                               <span className="text-[10px] font-bold text-[#718096] mb-0.5">Rent</span>
+                               <span className="text-[15px] font-black text-[#1A2B28]">{tenant.rent}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                               <span className="text-[10px] font-bold text-[#718096] mb-0.5">Suite</span>
+                               <span className="text-[13px] font-bold text-[#1A2B28]">{tenant.room}</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                               <div className="flex flex-col items-center min-w-[70px]">
+                                  <span className="text-[10px] font-bold text-[#718096] mb-1">Status</span>
+                                  <div className="px-2.5 py-1 rounded-full bg-[#EBFBF8] text-[#008075] text-[9px] font-black">
+                                     Active
+                                  </div>
+                               </div>
+                            </div>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+                
+                {filteredTenants.length === 0 && (
+                   <div className="flex flex-col items-center py-12 text-slate-400 gap-3">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                      <p className="text-sm font-medium">No tenants match your search</p>
+                   </div>
+                )}
+             </div>
           </main>
        </div>
     );
@@ -347,7 +395,7 @@ export default function TenantsPage() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-xl font-black text-[#1A2B28]">Add Tenant</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ABB3B8] mt-1">New Onboarding</span>
+              <span className="text-[12px] font-bold text-[#718096] mt-1">New Onboarding</span>
             </div>
           </button>
 
@@ -360,7 +408,7 @@ export default function TenantsPage() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-xl font-black text-[#1A2B28]">View Tenants</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ABB3B8] mt-1">Manage Profiles</span>
+              <span className="text-[12px] font-bold text-[#718096] mt-1">Manage Profiles</span>
             </div>
           </button>
 
@@ -373,7 +421,7 @@ export default function TenantsPage() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-xl font-bold text-[#1A2B28] font-body">Remove Tenant</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ABB3B8] mt-1 font-body">Process Exit</span>
+              <span className="text-[12px] font-bold text-[#ABB3B8] mt-1">Process Exit</span>
             </div>
           </button>
         </div>

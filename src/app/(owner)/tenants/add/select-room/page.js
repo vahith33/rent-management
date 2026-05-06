@@ -38,7 +38,7 @@ export default function SelectRoomPage() {
         {/* Filter Section */}
         <div className="flex items-center justify-between bg-white p-4 rounded-3xl shadow-sm border border-slate-50">
            <div className="flex flex-col">
-              <span className="text-[12px] font-bold uppercase tracking-widest text-[#718096]">Room Availability</span>
+              <span className="text-[13px] font-black text-[#1A2B28]">Room Availability</span>
               <span className="text-[11px] font-medium text-[#ADB5BD]">Show vacant rooms only</span>
            </div>
            <button 
@@ -53,15 +53,15 @@ export default function SelectRoomPage() {
         <div className="flex items-center justify-center gap-6 px-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm border-2 border-[#006E65]"></div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#718096]">Available</span>
+            <span className="text-[12px] font-bold text-[#718096]">Available</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm bg-[#E2E8F0]"></div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#718096]">Full</span>
+            <span className="text-[12px] font-bold text-[#718096]">Full</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm bg-[#006E65]"></div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1A2B28]">Selected</span>
+            <span className="text-[12px] font-bold text-[#1A2B28]">Selected</span>
           </div>
         </div>
 
@@ -82,7 +82,7 @@ export default function SelectRoomPage() {
               >
                 {/* Vacancy Badge */}
                 {room.status !== 'occupied' && (
-                  <div className={`absolute top-2 right-2 px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-tighter ${
+                  <div className={`absolute top-2 right-2 px-1.5 py-0.5 rounded-full text-[9px] font-black ${
                     room.id === selectedRoom ? 'bg-white/20 text-white' : 'bg-[#EBFBF8] text-[#006E65]'
                   }`}>
                     {room.vacancies} Left
@@ -91,13 +91,13 @@ export default function SelectRoomPage() {
 
                 <div className="flex flex-col items-center mt-1">
                   <span className="text-xl font-black">{room.id}</span>
-                  <span className={`text-[7px] font-black uppercase tracking-widest mt-1 ${room.id === selectedRoom ? 'text-white/70' : 'text-[#A0AEC0]'}`}>
+                  <span className={`text-[10px] font-black mt-1 ${room.id === selectedRoom ? 'text-white/70' : 'text-[#A0AEC0]'}`}>
                     {room.sharing.split(' ')[0]} SH
                   </span>
                 </div>
 
                 <div className="w-full flex flex-col gap-1.5 items-center">
-                  <div className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest ${
+                  <div className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
                     room.id === selectedRoom 
                       ? 'bg-white/20 text-white' 
                       : room.type === 'AC' 
@@ -109,7 +109,7 @@ export default function SelectRoomPage() {
                   {room.status === 'occupied' ? (
                      <div className="flex items-center gap-1 opacity-30">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        <span className="text-[7px] font-black uppercase tracking-widest">Full</span>
+                        <span className="text-[10px] font-black">Full</span>
                      </div>
                   ) : room.id === selectedRoom ? (
                     <div className="flex gap-0.5">
@@ -135,7 +135,7 @@ export default function SelectRoomPage() {
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
                </div>
                <div>
-                  <p className="text-[11px] font-black text-[#1A2B28] uppercase tracking-wider">Wi-Fi 6</p>
+                  <p className="text-[13px] font-black text-[#1A2B28]">Wi-Fi 6</p>
                   <p className="text-[9px] font-medium text-[#718096]">Gigabit Fiber</p>
                </div>
             </div>
@@ -144,7 +144,7 @@ export default function SelectRoomPage() {
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><polyline points="20 4 13 4 13 11 16 8 20 11 20 4"/></svg>
                </div>
                <div>
-                  <p className="text-[11px] font-black text-[#1A2B28] uppercase tracking-wider">AC Unit</p>
+                  <p className="text-[13px] font-black text-[#1A2B28]">AC Unit</p>
                   <p className="text-[9px] font-medium text-[#718096]">Inverter Tech</p>
                </div>
             </div>
@@ -158,7 +158,7 @@ export default function SelectRoomPage() {
           <div className="bg-white rounded-[32px] p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.02),0_20px_60px_rgba(0,0,0,0.05)] border border-slate-50 space-y-6">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                 <span className="text-[10px] font-black uppercase tracking-widest text-[#008075]">Selected Room</span>
+                 <span className="text-[12px] font-black text-[#008075]">Selected Room</span>
                  <h4 className="text-[17px] font-black text-[#1A2B28]">Room {selectedRoomData.id} — 1st Floor</h4>
                  <div className="flex items-center gap-2 mt-1">
                     <span className="text-[12px] font-bold text-[#718096]">{selectedRoomData.sharing}</span>
@@ -167,7 +167,7 @@ export default function SelectRoomPage() {
                  </div>
               </div>
               <div className="text-right">
-                <p className="text-[11px] font-medium text-[#718096] uppercase tracking-wider mb-0.5">Starting at</p>
+                <p className="text-[13px] font-medium text-[#718096] mb-0.5">Starting at</p>
                 <p className="text-[18px] font-black text-[#1A2B28]">₹12,000<span className="text-sm font-medium text-[#ADB5BD]">/mo</span></p>
               </div>
             </div>

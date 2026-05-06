@@ -107,15 +107,15 @@ export default function DashboardPage() {
                   <div className="px-4 py-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
                      <div className="space-y-4">
                         <div className="space-y-1.5">
-                           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Owner Name</label>
+                           <label className="text-[13px] font-black text-[#1A2B28]">Owner Name</label>
                            <input value={tempInfo.name} onChange={(e) => setTempInfo({...tempInfo, name: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-[14px] font-bold outline-none focus:border-[#008075] transition-all"/>
                         </div>
                         <div className="space-y-1.5">
-                           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">PG Name</label>
+                           <label className="text-[13px] font-black text-[#1A2B28]">PG Name</label>
                            <input value={tempInfo.pgName} onChange={(e) => setTempInfo({...tempInfo, pgName: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-[14px] font-bold outline-none focus:border-[#008075] transition-all"/>
                         </div>
                         <div className="space-y-1.5">
-                           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Phone Number</label>
+                           <label className="text-[13px] font-black text-[#1A2B28]">Phone Number</label>
                            <input value={tempInfo.phone} onChange={(e) => setTempInfo({...tempInfo, phone: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-[14px] font-bold outline-none focus:border-[#008075] transition-all"/>
                         </div>
                      </div>
@@ -179,7 +179,7 @@ export default function DashboardPage() {
             onClick={() => router.push('/tenants?view=list')}
             className="bg-white p-5 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.02)] border-l-4 border-[#008075] relative overflow-hidden group cursor-pointer active:scale-95 transition-all hover:bg-teal-50/30"
           >
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#ADB5BD]">Total Tenants</span>
+            <span className="text-[12px] font-bold text-[#ADB5BD]">Total Tenants</span>
             <div className="flex items-baseline gap-2 mt-2">
               <span className="text-3xl font-bold text-[#1A2B28]">24</span>
               <span className="text-[11px] font-bold text-[#008075]">+2 this month</span>
@@ -191,7 +191,7 @@ export default function DashboardPage() {
             onClick={() => router.push('/rooms?view=list')}
             className="bg-white p-5 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative overflow-hidden group cursor-pointer active:scale-95 transition-all hover:bg-slate-50"
           >
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#ADB5BD]">Vacant Beds</span>
+            <span className="text-[12px] font-bold text-[#ADB5BD]">Vacant Beds</span>
             <div className="mt-2 space-y-3">
               <span className="text-3xl font-bold text-[#1A2B28]">4</span>
               <div className="w-full bg-[#F1F4F8] h-2 rounded-full overflow-hidden">
@@ -205,7 +205,7 @@ export default function DashboardPage() {
             onClick={() => router.push('/rent?view=unpaid')}
             className="bg-white p-5 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative overflow-hidden group cursor-pointer active:scale-95 transition-all hover:bg-red-50"
           >
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#ADB5BD]">Pending Rent</span>
+            <span className="text-[12px] font-bold text-[#ADB5BD]">Pending Rent</span>
             <div className="mt-2">
               <span className="text-3xl font-bold text-red-500">6</span>
               <p className="text-[11px] font-medium text-[#718096] mt-1">Due this week</p>
@@ -217,7 +217,7 @@ export default function DashboardPage() {
             onClick={() => router.push('/rent?view=analytics')}
             className="bg-white p-5 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative overflow-hidden group cursor-pointer active:scale-95 transition-all hover:bg-amber-50"
           >
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#ADB5BD]">Monthly Income</span>
+            <span className="text-[12px] font-bold text-[#ADB5BD]">Monthly Income</span>
             <div className="mt-2">
               <span className="text-3xl font-bold text-[#1A2B28]">₹1.08L</span>
               <p className="text-[11px] font-medium text-[#718096] mt-1">of ₹1.24L target</p>
@@ -292,7 +292,7 @@ export default function DashboardPage() {
               <div key={i} className="bg-white p-4 rounded-[28px] shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-50 flex items-center justify-between hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="flex items-center gap-4">
                   <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-[#EEF2FF]">
-                    <Image src={tenant.img} alt={tenant.name} fill className="object-cover" />
+                    <Image src={tenant.img} alt={tenant.name} fill sizes="48px" className="object-cover" />
                   </div>
                   <div className="flex flex-col">
                     <span className="font-bold text-[#1A2B28]">{tenant.name}</span>

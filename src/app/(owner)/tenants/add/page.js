@@ -20,7 +20,7 @@ export default function AddTenantPage() {
   };
 
   return (
-    <div className={`min-h-screen bg-white pb-40 transition-all duration-500 ${showSuccess ? 'blur-md scale-[0.98]' : ''}`}>
+    <div className={`min-h-screen bg-white pb-20 transition-all duration-500 ${showSuccess ? 'blur-md scale-[0.98]' : ''}`}>
       {/* Success Overlay */}
       {showSuccess && (
         <div className="fixed inset-0 z-100 flex items-center justify-center px-6 text-center">
@@ -57,7 +57,7 @@ export default function AddTenantPage() {
           </div>
           
           <div className="space-y-2">
-            <label className="text-[12px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70 font-body">Full Name</label>
+            <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1 font-body">Full Name</label>
             <input 
               type="text" 
               placeholder="e.g. Alexander Mitchell"
@@ -67,7 +67,7 @@ export default function AddTenantPage() {
 
           <div className="flex gap-4">
              <div className="flex-1 space-y-2">
-                <label className="text-[10px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">Phone</label>
+                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Phone</label>
                 <input 
                   type="tel" 
                   placeholder="+1 (555) 000-0000" 
@@ -75,7 +75,7 @@ export default function AddTenantPage() {
                 />
              </div>
              <div className="flex-1 space-y-2">
-                <label className="text-[10px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">Gender</label>
+                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Gender</label>
                 <div className="relative">
                   <select className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none font-medium appearance-none text-[14px] font-body">
                       <option>Select</option>
@@ -112,7 +112,7 @@ export default function AddTenantPage() {
                    </div>
                    <div className="flex flex-col text-left">
                       <span className="text-[15px] font-black text-[#1A2B28]">Select Suite</span>
-                      <span className="text-[9px] font-black text-[#00685F] uppercase tracking-[0.2em] mt-1.5 leading-none">ROOM ALLOCATION TOOL</span>
+                      <span className="text-[12px] font-black text-[#00685F] mt-1.5 leading-none">Room Allocation Tool</span>
                    </div>
                 </div>
                 <div className="text-[#ADB5BD] group-hover:text-[#00685F] group-hover:translate-x-1 transition-all">
@@ -130,7 +130,7 @@ export default function AddTenantPage() {
           </div>
           <div className="flex gap-4">
              <div className="flex-1 space-y-2">
-                <label className="text-[10px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">ID Type</label>
+                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">ID Type</label>
                 <div className="relative">
                   <select className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none appearance-none">
                     <option>Passport</option>
@@ -141,7 +141,7 @@ export default function AddTenantPage() {
                 </div>
              </div>
              <div className="flex-1 space-y-2">
-                <label className="text-[10px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">ID Number</label>
+                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">ID Number</label>
                 <input type="text" placeholder="E1234567" className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none" />
              </div>
           </div>
@@ -155,7 +155,7 @@ export default function AddTenantPage() {
              </div>
              <div className="text-center font-bold">
                 <p className="text-[15px]! text-[#1A2B28] font-bold">Successfully Added!</p>
-                <p className="text-[9px] text-[#ABB3B8] uppercase tracking-widest mt-1">PDF, JPG or PNG</p>
+                <p className="text-[12px] text-[#ABB3B8] mt-1">PDF, JPG or PNG</p>
              </div>
           </div>
         </section>
@@ -168,18 +168,18 @@ export default function AddTenantPage() {
           </div>
           <div className="space-y-4">
              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">Contact Name</label>
+                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Contact Name</label>
                 <input type="text" placeholder="Full name of contact" className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none" />
              </div>
              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">Phone Number</label>
+                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Phone Number</label>
                 <input type="tel" placeholder="+1 (555) 000-0000" className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none" />
              </div>
           </div>
         </section>
       </main>
 
-      <footer className="px-4 pt-10 pb-20 flex gap-4">
+      <footer className="px-4 pt-10 pb-10 flex gap-4">
         <button 
           onClick={() => router.back()} 
           className="flex-1 bg-[#EEF2F8] p-5 rounded-[20px] text-[#1A2B28] font-bold hover:bg-slate-200 transition-colors"

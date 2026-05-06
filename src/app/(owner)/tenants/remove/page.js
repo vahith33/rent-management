@@ -66,13 +66,13 @@ export default function RemoveTenantPage() {
             placeholder="Search by name or room..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white pl-14 pr-6 py-5 rounded-[24px] border border-slate-200 outline-none focus:ring-2 focus:ring-[#EB5757]/20 focus:border-[#EB5757] transition-all text-[14px] font-medium shadow-sm"
+            className="w-full bg-white pl-14 pr-6 py-5 rounded-[24px] border border-slate-200 outline-none focus:ring-2 focus:ring-[#EB5757]/20 focus:border-[#EB5757] transition-all text-[14px] font-medium text-[#1A2B28] shadow-sm"
           />
         </div>
 
         {/* Tenant List */}
         <div className="space-y-4">
-          <h3 className="text-[12px] font-bold text-[#718096] uppercase tracking-widest ml-1 opacity-70">Active Residents ({filteredTenants.length})</h3>
+          <h3 className="text-[20px] font-bold text-[#1A2B28] font-heading">Active Residents ({filteredTenants.length})</h3>
           
           {filteredTenants.length > 0 ? (
             <div className="grid gap-4">
@@ -84,7 +84,7 @@ export default function RemoveTenantPage() {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[16px] font-bold text-[#1A2B28]">{tenant.name}</span>
-                      <span className="text-[11px] font-bold text-[#ABB3B8] uppercase tracking-widest mt-0.5">Room {tenant.room}</span>
+                      <span className="text-[12px] font-bold text-[#ABB3B8] mt-0.5">Room {tenant.room}</span>
                     </div>
                   </div>
                   <button 

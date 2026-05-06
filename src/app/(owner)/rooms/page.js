@@ -9,6 +9,7 @@ export default function RoomsPage() {
   const [mounted, setMounted] = useState(false);
   const [view, setView] = useState("menu"); // "menu", "list", "detail"
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const rooms = [
     { 
@@ -101,7 +102,7 @@ export default function RoomsPage() {
                  <div className="p-8 text-center bg-white">
                     <h1 className="text-[22px] font-black text-[#1A2B28] mb-1">{selectedRoom.name}</h1>
                     <div className="flex items-center justify-center gap-2 text-[#718096]">
-                       <span className="text-[9px] font-bold uppercase tracking-widest">{selectedRoom.floor} • {selectedRoom.type}</span>
+                       <span className="text-[12px] font-bold text-[#718096]">{selectedRoom.floor} • {selectedRoom.type}</span>
                     </div>
                  </div>
               </div>
@@ -109,11 +110,11 @@ export default function RoomsPage() {
               {/* Stats Card */}
               <div className="bg-[#F8FAFB] rounded-[32px] p-5 border border-slate-50 grid grid-cols-2 gap-4">
                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-[#718096] uppercase tracking-widest opacity-70">Monthly Rent</p>
+                    <p className="text-[12px] font-bold text-[#718096]">Monthly Rent</p>
                     <p className="text-[22px] font-black text-[#1A2B28]">{selectedRoom.price}</p>
                  </div>
                  <div className="space-y-1 border-l border-slate-200 pl-4">
-                    <p className="text-[10px] font-bold text-[#718096] uppercase tracking-widest opacity-70">Availability</p>
+                    <p className="text-[12px] font-bold text-[#718096]">Availability</p>
                     <p className="text-[22px] font-black text-[#1A2B28]">{selectedRoom.available}/{selectedRoom.beds}</p>
                  </div>
               </div>
@@ -161,58 +162,92 @@ export default function RoomsPage() {
   // VIEW: ROOM LIST
   // ==========================================
   if (view === "list") {
-    return (
-       <div className="min-h-screen bg-white animate-in fade-in duration-500 font-body pb-32">
-          <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-50">
-             <button onClick={() => router.push('/rooms')} className="text-[#00685F] active:scale-90 transition-transform">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-             </button>
-             <div className="flex flex-col">
-                <h1 className="text-xl font-black text-[#1A2B28]">Room List</h1>
-                <span className="text-[10px] font-bold text-[#008075] uppercase tracking-widest mt-0.5">{rooms.length} Total Rooms</span>
-             </div>
-          </header>
+     const filteredRooms = rooms.filter(room => 
+       room.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+       room.floor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+       room.type.toLowerCase().includes(searchQuery.toLowerCase())
+     );
 
-          <main className="px-4 py-4 space-y-4">
-             {rooms.map((room) => (
-                <div 
-                  key={room.id} 
-                  onClick={() => router.push(`?view=detail&id=${room.id}`)}
-                  className="bg-[#F8FAFB] rounded-[28px] p-5 border border-slate-50 space-y-5 active:scale-[0.98] transition-all group"
-                >
-                   <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                         <div className={`w-12 h-12 ${room.status === 'OCCUPIED' ? 'bg-[#00675B]' : 'bg-slate-200'} rounded-xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform`}>
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={room.status === 'OCCUPIED' ? 'white' : '#718096'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-                         </div>
-                         <div className="flex flex-col">
-                            <span className="text-[17px] font-black text-[#1A2B28] group-hover:text-[#00685F] transition-colors">{room.name}</span>
-                            <span className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest mt-0.5">{room.floor} • {room.type}</span>
-                         </div>
-                      </div>
-                      <div className={`px-4 py-1.5 rounded-full text-[9px] font-black tracking-widest ${
-                        room.status === 'OCCUPIED' ? 'bg-red-50 text-red-500' : 
-                        room.status === 'PARTIAL' ? 'bg-orange-50 text-orange-600' : 'bg-[#EBFBF8] text-[#008075]'
-                      }`}>
-                         {room.status}
-                      </div>
-                   </div>
+     return (
+        <div className="min-h-screen bg-white animate-in fade-in duration-500 font-body pb-32">
+           <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-50">
+              <button onClick={() => router.push('/rooms')} className="text-[#00685F] active:scale-90 transition-transform">
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              </button>
+              <div className="flex flex-col">
+                 <h1 className="text-xl font-black text-[#1A2B28]">Room List</h1>
+                 <span className="text-[12px] font-bold text-[#008075] mt-0.5">{rooms.length} Total Units</span>
+              </div>
+           </header>
 
-                   <div className="flex items-center justify-between pt-4 border-t border-slate-200/50">
-                      <div className="flex flex-col">
-                         <span className="text-[10px] font-bold text-[#718096] uppercase tracking-widest opacity-70">Pricing</span>
-                         <span className="text-[22px] font-black text-[#1A2B28] mt-0.5">{room.price}</span>
-                      </div>
-                      <div className="text-right">
-                         <span className="text-[10px] font-bold text-[#718096] uppercase tracking-widest opacity-70">Availability</span>
-                         <span className="text-[15px] font-black text-[#1A2B28] mt-0.5">{room.available}/{room.beds} <span className="text-[10px] text-[#ABB3B8]">Free</span></span>
-                      </div>
-                   </div>
-                </div>
-             ))}
-          </main>
-       </div>
-    );
+           <main className="px-6 py-8 space-y-8">
+              <div className="space-y-2">
+                 <h2 className="text-[22px] font-bold text-[#1A2B28]">Inventory Directory</h2>
+                 <p className="text-[14px] font-medium text-[#718096]">Manage and monitor your property availability</p>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative group">
+                 <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#ADB5BD] group-focus-within:text-[#008075] transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                 </div>
+                 <input 
+                    type="text" 
+                    placeholder="Search by room name or floor..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-white pl-14 pr-6 py-5 rounded-[24px] border border-slate-200 outline-none focus:ring-2 focus:ring-[#008075]/20 focus:border-[#008075] transition-all text-[14px] font-medium text-[#1A2B28] shadow-sm"
+                 />
+              </div>
+
+              <div className="space-y-5">
+                 <h3 className="text-[20px] font-bold text-[#1A2B28]">Active Rooms ({filteredRooms.length})</h3>
+                 
+                 <div className="grid gap-4">
+                    {filteredRooms.map((room) => (
+                       <button 
+                         key={room.id} 
+                         onClick={() => router.push(`?view=detail&id=${room.id}`)}
+                         className="bg-white rounded-[28px] p-5 border border-slate-100 shadow-sm space-y-4 active:scale-[0.98] transition-all group w-full"
+                       >
+                          <div className="flex items-center gap-4">
+                             <div className="w-11 h-11 bg-[#00685F] text-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                             </div>
+                             <div className="flex flex-col text-left">
+                                <span className="text-[16px] font-black text-[#1A2B28] group-hover:text-[#00685F] transition-colors">{room.name}</span>
+                                <span className="text-[12px] font-bold text-[#718096] mt-0.5">{room.floor} • {room.type}</span>
+                             </div>
+                          </div>
+
+                          <div className="grid grid-cols-3 pt-3 border-t border-slate-50">
+                             <div className="flex flex-col items-start">
+                                <span className="text-[10px] font-bold text-[#718096] mb-0.5">Rent</span>
+                                <span className="text-[15px] font-black text-[#1A2B28]">{room.price}</span>
+                             </div>
+                             <div className="flex flex-col items-center">
+                                <span className="text-[10px] font-bold text-[#718096] mb-0.5">Vacancy</span>
+                                <span className="text-[13px] font-bold text-[#1A2B28]">{room.available}/{room.beds} <span className="text-[10px] text-[#718096] font-medium">Free</span></span>
+                             </div>
+                             <div className="flex flex-col items-end">
+                                <div className="flex flex-col items-center min-w-[70px]">
+                                   <span className="text-[10px] font-bold text-[#718096] mb-1">Status</span>
+                                   <div className={`px-2.5 py-1 rounded-full text-[9px] font-black ${
+                                     room.status === 'OCCUPIED' ? 'bg-red-50 text-red-500' : 
+                                     room.status === 'PARTIAL' ? 'bg-orange-50 text-orange-600' : 'bg-[#EBFBF8] text-[#008075]'
+                                   }`}>
+                                      {room.status}
+                                   </div>
+                                </div>
+                             </div>
+                          </div>
+                       </button>
+                    ))}
+                 </div>
+              </div>
+           </main>
+        </div>
+     );
   }
 
   // ==========================================
@@ -227,10 +262,10 @@ export default function RoomsPage() {
         <h1 className="text-xl font-black text-[#1A2B28]">Manage Property</h1>
       </header>
 
-      <main className="px-4 pt-8 space-y-8">
-        <div className="space-y-2 text-left px-1">
+      <main className="px-6 pt-8 space-y-8">
+        <div className="space-y-2 text-left">
           <h2 className="text-3xl font-black text-[#1A2B28]">Property Inventory</h2>
-          <p className="text-[13px] font-bold text-[#718096] opacity-70 uppercase tracking-widest">Add rooms, view availability, and manage status</p>
+          <p className="text-sm font-medium text-[#718096]">Add rooms, view availability, and manage status</p>
         </div>
 
         <div className="grid gap-5 mt-10">
@@ -243,12 +278,12 @@ export default function RoomsPage() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-xl font-black text-[#1A2B28]">Add Room</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ABB3B8] mt-1">Expansion</span>
+              <span className="text-[12px] font-bold text-[#ABB3B8] mt-1">Expansion</span>
             </div>
           </button>
 
           <button 
-            onClick={() => setView("list")}
+            onClick={() => router.push("?view=list")}
             className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
           >
             <div className={`bg-[#00685F] text-white p-4.5 rounded-2xl shadow-lg shadow-[#00685F]/10`}>
@@ -256,7 +291,7 @@ export default function RoomsPage() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-xl font-black text-[#1A2B28]">View Rooms</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ABB3B8] mt-1">Occupancy Meta</span>
+              <span className="text-[12px] font-bold text-[#718096] mt-1">Occupancy Meta</span>
             </div>
           </button>
 
@@ -269,7 +304,7 @@ export default function RoomsPage() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-xl font-black text-[#1A2B28]">Remove Room</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ABB3B8] mt-1 font-body">Cleanup</span>
+              <span className="text-[12px] font-bold text-[#ABB3B8] mt-1">Cleanup</span>
             </div>
           </button>
         </div>

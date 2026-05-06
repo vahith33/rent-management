@@ -33,35 +33,35 @@ export default function SelectBedPage() {
         <div className="flex justify-center gap-8 items-center px-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm border-2 border-slate-200"></div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Available</span>
+            <span className="text-[12px] font-bold text-[#718096]">Available</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm bg-[#ADB5BD]"></div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#ADB5BD]">Full</span>
+            <span className="text-[12px] font-bold text-[#718096]">Full</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm bg-[#006E65]"></div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1A2B28]">Selected</span>
+            <span className="text-[12px] font-bold text-[#1A2B28]">Selected</span>
           </div>
         </div>
 
         <div className="text-center space-y-1">
            <h2 className="text-xl font-black text-[#1A2B28]">Suite 204</h2>
-           <p className="text-[11px] font-medium text-[#ADB5BD] uppercase tracking-[0.2em]">Premium Quadruple</p>
+           <p className="text-[13px] font-medium text-[#ADB5BD]">Premium Quadruple</p>
         </div>
 
         {/* Room Illustration Container */}
         <div className="relative mx-auto mt-6 bg-slate-50 rounded-[40px] p-5 pt-8 pb-10 border border-white flex flex-col gap-8 max-w-[300px]">
             {/* Design Labels */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-white/50 px-3 py-1 rounded-b-lg border-x border-b border-white text-[7px] font-black uppercase tracking-[0.2em] text-[#ADB5BD]">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-white/50 px-3 py-1 rounded-b-lg border-x border-b border-white text-[10px] font-black text-[#ADB5BD]">
                Entrance
             </div>
             
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex flex-col items-center opacity-30">
-               <span className="rotate-90 text-[7px] font-black uppercase tracking-widest text-[#1A2B28] whitespace-nowrap">Washroom</span>
+               <span className="rotate-90 text-[10px] font-black text-[#1A2B28] whitespace-nowrap">Washroom</span>
             </div>
             
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 opacity-20 text-[7px] font-black uppercase tracking-[0.2em] text-[#1A2B28]">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 opacity-20 text-[10px] font-black text-[#1A2B28]">
                 Window
             </div>
 
@@ -142,12 +142,12 @@ export default function SelectBedPage() {
         <div className="bg-white rounded-[32px] p-6 border border-slate-50 space-y-6">
             <div className="flex items-center justify-between px-1">
                <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#008075]">Assigned Bed</span>
+                  <span className="text-[12px] font-black text-[#008075]">Assigned Bed</span>
                   <span className="text-[17px] font-black text-[#1A2B28]">Bed {selectedBed}</span>
                   <span className="text-[11px] font-medium text-[#718096] opacity-60">Primary Occupant</span>
                </div>
                <div className="flex flex-col items-end gap-0.5">
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-[#718096]">Monthly Rent</span>
+                  <span className="text-[12px] font-bold text-[#718096]">Monthly Rent</span>
                   <p className="text-[20px] font-black text-[#1A2B28]">₹12,000<span className="text-sm font-medium text-[#ADB5BD]">/mo</span></p>
                </div>
             </div>

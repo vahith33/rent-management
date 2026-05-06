@@ -82,7 +82,7 @@ export default function SettingsPage() {
                     </div>
                     <button 
                       onClick={() => router.push('/settings/change-mobile')}
-                      className="text-[12px] font-black text-[#00685F] uppercase tracking-widest"
+                      className="text-[14px] font-black text-[#00685F]"
                     >
                       Change
                     </button>

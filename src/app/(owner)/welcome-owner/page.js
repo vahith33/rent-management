@@ -47,6 +47,7 @@ export default function WelcomePage() {
               src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=800" 
               alt="Apartment Interior" 
               fill 
+              sizes="33vw"
               className="object-cover"
             />
           </div>
@@ -55,6 +56,7 @@ export default function WelcomePage() {
               src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800" 
               alt="Building Exterior" 
               fill 
+              sizes="33vw"
               className="object-cover"
             />
           </div>
@@ -63,6 +65,7 @@ export default function WelcomePage() {
               src="https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&q=80&w=800" 
               alt="Living Room" 
               fill 
+              sizes="33vw"
               className="object-cover"
             />
           </div>
