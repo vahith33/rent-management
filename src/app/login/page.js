@@ -18,7 +18,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFB] flex flex-col items-center font-sans selection:bg-[#008075]/10 antialiased">
       {/* Top Header with Gradient and House Icon */}
-      <div className="w-full max-w-[440px] bg-gradient-to-b from-[#008075] to-[#0D1F1D] rounded-b-[40px] p-10 pb-20 flex flex-col items-start gap-3 relative overflow-hidden">
+      <div className="w-full max-w-[440px] bg-linear-to-b from-[#008075] to-[#0D1F1D] rounded-b-[40px] p-10 pb-20 flex flex-col items-start gap-3 relative overflow-hidden">
         <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/20 shadow-inner">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 10L12 3L21 10V21H16V14H8V21H3V10Z" />
@@ -55,7 +55,7 @@ export default function LoginPage() {
             </div>
             <input
               type="tel"
-              placeholder="98765 43210"
+              placeholder="93636 58160"
               value={mobileNumber}
               onChange={(e) => setMobileNumber(e.target.value.replace(/[^\d\s]/g, ""))}
               onKeyDown={(e) => e.key === "Enter" && handleMobileContinue()}

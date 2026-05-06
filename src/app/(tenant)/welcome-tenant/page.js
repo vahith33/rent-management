@@ -1,6 +1,10 @@
+"use client";
+
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function WelcomeTenantPage() {
+  const router = useRouter();
   return (
     <div className="min-h-screen bg-[#F8FAFB] flex flex-col items-center justify-between pb-12 pt-20 px-6 font-sans">
       <div className="w-full max-w-[420px] flex flex-col items-center text-center">
@@ -57,7 +61,7 @@ export default function WelcomeTenantPage() {
             fill 
             className="object-cover transition-transform duration-1000 group-hover:scale-110"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+          <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent"></div>
           
           <div className="absolute top-5 left-5">
             <div className="bg-white/95 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-sm border border-white/50">
@@ -76,6 +80,7 @@ export default function WelcomeTenantPage() {
       {/* Action Button */}
       <div className="w-full max-w-[340px] mt-10">
         <button 
+          onClick={() => router.push('/my-residence')}
           className="w-full bg-[#00624E] py-5 rounded-[22px] text-white font-bold text-lg shadow-xl shadow-teal-900/20 active:scale-[0.98] transition-all hover:bg-[#004D3D]"
         >
           Manage Residence

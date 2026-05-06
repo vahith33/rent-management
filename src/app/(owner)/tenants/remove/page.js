@@ -107,7 +107,7 @@ export default function RemoveTenantPage() {
 
       {/* Confirmation Modal */}
       {showConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1A2B28]/40 backdrop-blur-sm p-6 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-[#1A2B28]/40 backdrop-blur-sm p-6 animate-in fade-in duration-300">
           <div className="bg-white w-full max-w-[400px] rounded-[40px] p-8 flex flex-col items-center gap-6 shadow-2xl animate-in zoom-in-95 pointer-events-auto">
             <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center text-red-500">
                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -137,7 +137,7 @@ export default function RemoveTenantPage() {
 
       {/* Success Notification */}
       {showSuccess && (
-        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-[#1A2B28] text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-10 duration-500">
+        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-200 bg-[#1A2B28] text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-10 duration-500">
           <div className="bg-green-500 rounded-full p-1">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>

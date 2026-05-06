@@ -1,0 +1,60 @@
+"use client";
+
+import { useRouter, usePathname } from 'next/navigation';
+
+export default function BottomNav() {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const navItems = [
+    { 
+      label: 'Home', 
+      icon: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />, 
+      path: '/dashboard' 
+    },
+    { 
+      label: 'Tenants', 
+      icon: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>, 
+      path: '/tenants' 
+    },
+    { 
+      label: 'Rooms', 
+      icon: <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>, 
+      path: '/rooms' 
+    },
+    { 
+      label: 'Rent', 
+      icon: <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>, 
+      path: '/rent' 
+    },
+  ];
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 px-14 py-2 flex justify-between items-center z-50 safe-bottom">
+      {navItems.map((item, i) => {
+        const isActive = pathname.startsWith(item.path);
+        return (
+          <div 
+            key={i} 
+            onClick={() => router.push(item.path)} 
+            className="flex flex-col items-center gap-1 cursor-pointer transition-all duration-300 relative group active:scale-90"
+          >
+            {/* Active Highlight (Shadow) */}
+            {isActive && (
+              <div className="absolute -top-1 w-10 h-10 bg-[#00685F]/5 rounded-full blur-md -z-10 animate-pulse" />
+            )}
+            
+            <div className={`p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-[#EBFBF8] text-[#00685F] shadow-inner shadow-[#00685F]/5' : 'text-[#94A3B8]'}`}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round">
+                {item.icon}
+              </svg>
+            </div>
+            <span className={`text-[10px] uppercase tracking-widest font-black transition-colors ${isActive ? 'text-[#00685F]' : 'text-[#94A3B8] opacity-60'}`}>
+              {item.label}
+            </span>
+          </div>
+        );
+      })}
+    </nav>
+  );
+}

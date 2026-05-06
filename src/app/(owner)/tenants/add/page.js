@@ -23,7 +23,7 @@ export default function AddTenantPage() {
     <div className={`min-h-screen bg-white pb-40 transition-all duration-500 ${showSuccess ? 'blur-md scale-[0.98]' : ''}`}>
       {/* Success Overlay */}
       {showSuccess && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6 text-center">
+        <div className="fixed inset-0 z-100 flex items-center justify-center px-6 text-center">
           <div className="bg-white rounded-[40px] p-10 flex flex-col items-center gap-6 shadow-2xl border border-[#006E65]/5 animate-in zoom-in duration-500">
              <div className="w-24 h-24 bg-[#EBFBF8] rounded-full flex items-center justify-center relative">
                 <div className="absolute inset-0 bg-[#006E65]/5 rounded-full animate-ping"></div>
@@ -38,22 +38,22 @@ export default function AddTenantPage() {
       )}
 
       {/* Header */}
-      <header className="px-6 py-8 flex items-center gap-6 sticky top-0 bg-white z-50">
-        <button onClick={() => router.back()} className="text-[#00685F]">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50">
+        <button onClick={() => router.back()} className="text-[#00685F] active:scale-90 transition-transform">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
         </button>
-        <h1 className="text-[20px] font-bold text-[#00685F] font-heading">Add New Tenant</h1>
+        <h1 className="text-xl font-black text-[#1A2B28]">Add New Tenant</h1>
       </header>
 
-      <main className="px-6 space-y-4">
+      <main className="px-4 space-y-4">
         {/* PERSONAL DETAILS SECTION */}
-        <section className="bg-[#F8FAFB] rounded-[32px] p-7 space-y-5 border border-slate-50">
+        <section className="bg-[#F8FAFB] rounded-[32px] p-5 space-y-5 border border-slate-50">
           <div className="flex items-center gap-3">
-            <div className="w-1 h-6 bg-[#00685F] rounded-full"></div>
-            <h2 className="text-[13px] font-black tracking-widest text-[#718096] uppercase">PERSONAL DETAILS</h2>
+            <div className="w-1.5 h-6 bg-[#00685F] rounded-full"></div>
+            <h2 className="text-[16px] font-black text-[#1A2B28]">Personal Details</h2>
           </div>
           
           <div className="space-y-2">
@@ -91,10 +91,10 @@ export default function AddTenantPage() {
         </section>
 
         {/* ROOM ASSIGNMENT SECTION */}
-        <section className="bg-[#F8FAFB] rounded-[32px] p-7 space-y-5 border border-slate-50">
+        <section className="bg-[#F8FAFB] rounded-[32px] p-5 space-y-5 border border-slate-50">
           <div className="flex items-center gap-3">
-            <div className="w-1 h-6 bg-[#00685F] rounded-full"></div>
-            <h2 className="text-[13px] font-black tracking-widest text-[#718096] uppercase">ROOM ASSIGNMENT</h2>
+            <div className="w-1.5 h-6 bg-[#00685F] rounded-full"></div>
+            <h2 className="text-[16px] font-black text-[#1A2B28]">Room Assignment</h2>
           </div>
           
           <div className="pt-2">
@@ -123,10 +123,10 @@ export default function AddTenantPage() {
         </section>
 
         {/* VERIFICATION SECTION */}
-        <section className="bg-[#F8FAFB] rounded-[32px] p-7 space-y-5 border border-slate-50">
+        <section className="bg-[#F8FAFB] rounded-[32px] p-5 space-y-5 border border-slate-50">
           <div className="flex items-center gap-3">
-            <div className="w-1 h-6 bg-[#00685F] rounded-full"></div>
-            <h2 className="text-[13px] font-black tracking-widest text-[#718096] uppercase">IDENTITY VERIFICATION</h2>
+            <div className="w-1.5 h-6 bg-[#00685F] rounded-full"></div>
+            <h2 className="text-[16px] font-black text-[#1A2B28]">Identity Verification</h2>
           </div>
           <div className="flex gap-4">
              <div className="flex-1 space-y-2">
@@ -154,17 +154,17 @@ export default function AddTenantPage() {
                </svg>
              </div>
              <div className="text-center font-bold">
-                <p className="text-[14px] text-[#1A2B28]">Upload ID Document</p>
-                <p className="text-[9px] text-[#ABB3B8] uppercase tracking-[0.1em] mt-1">PDF, JPG or PNG</p>
+                <p className="text-[15px]! text-[#1A2B28] font-bold">Successfully Added!</p>
+                <p className="text-[9px] text-[#ABB3B8] uppercase tracking-widest mt-1">PDF, JPG or PNG</p>
              </div>
           </div>
         </section>
 
         {/* EMERGENCY CONTACT */}
-        <section className="bg-[#F8FAFB] rounded-[32px] p-7 space-y-5 border border-slate-50">
+        <section className="bg-[#F8FAFB] rounded-[32px] p-5 space-y-5 border border-slate-50">
           <div className="flex items-center gap-3">
-            <div className="w-1 h-6 bg-[#00685F] rounded-full"></div>
-            <h2 className="text-[13px] font-black tracking-widest text-[#718096] uppercase">EMERGENCY CONTACT</h2>
+            <div className="w-1.5 h-6 bg-[#00685F] rounded-full"></div>
+            <h2 className="text-[16px] font-black text-[#1A2B28]">Emergency Contact</h2>
           </div>
           <div className="space-y-4">
              <div className="space-y-2">
@@ -179,7 +179,7 @@ export default function AddTenantPage() {
         </section>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 bg-white p-6 flex gap-4 z-50 border-t border-slate-50">
+      <footer className="px-4 pt-10 pb-20 flex gap-4">
         <button 
           onClick={() => router.back()} 
           className="flex-1 bg-[#EEF2F8] p-5 rounded-[20px] text-[#1A2B28] font-bold hover:bg-slate-200 transition-colors"

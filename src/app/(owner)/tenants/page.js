@@ -1,66 +1,85 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+
+const tenants = [
+  {
+    id: 1,
+    name: "Arjun Sharma",
+    room: "Room 302-B",
+    floor: "2nd Floor",
+    status: "ACTIVE",
+    rent: "₹18,500",
+    deposit: "₹20,000",
+    phone: "+91 98765 43210",
+    email: "arjun.s@gmail.com",
+    moveIn: "15 Jan 2024",
+    period: "11 Months",
+    govId: "Aadhaar",
+    initials: "AS",
+    color: "bg-[#00675B]",
+    textColor: "text-white"
+  },
+  {
+    id: 2,
+    name: "Riya Kapoor",
+    room: "Room 105-A",
+    floor: "1st Floor",
+    status: "NOTICE",
+    rent: "₹16,000",
+    deposit: "₹15,000",
+    phone: "+91 99988 77665",
+    email: "riya.k@hotmail.com",
+    moveIn: "05 Mar 2024",
+    period: "12 Months",
+    govId: "Aadhaar",
+    initials: "RK",
+    color: "bg-orange-50",
+    textColor: "text-orange-600"
+  }
+];
 
 export default function TenantsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
   const [view, setView] = useState("menu"); // "menu", "list", "detail"
   const [selectedTenant, setSelectedTenant] = useState(null);
 
-  const tenants = [
-    {
-      id: 1,
-      name: "Arjun Sharma",
-      room: "Room 302-B",
-      floor: "2nd Floor",
-      status: "ACTIVE",
-      rent: "₹18,500",
-      deposit: "₹20,000",
-      phone: "+91 98765 43210",
-      email: "arjun.s@gmail.com",
-      moveIn: "15 Jan 2024",
-      period: "11 Months",
-      govId: "Aadhaar",
-      initials: "AS",
-      color: "bg-[#00675B]",
-      textColor: "text-white"
-    },
-    {
-      id: 2,
-      name: "Riya Kapoor",
-      room: "Room 105-A",
-      floor: "1st Floor",
-      status: "NOTICE",
-      rent: "₹16,000",
-      deposit: "₹15,000",
-      phone: "+91 99988 77665",
-      email: "riya.k@hotmail.com",
-      moveIn: "05 Mar 2024",
-      period: "12 Months",
-      govId: "Aadhaar",
-      initials: "RK",
-      color: "bg-orange-50",
-      textColor: "text-orange-600"
+  useEffect(() => {
+    setMounted(true);
+    const v = searchParams.get('view');
+    const id = searchParams.get('id');
+    
+    if (v === 'list') {
+      setView('list');
+    } else if (v === 'detail' && id) {
+      const tenant = tenants.find(t => t.id === parseInt(id));
+      if (tenant) {
+        setSelectedTenant(tenant);
+        setView('detail');
+      }
+    } else {
+      setView('menu');
     }
-  ];
+  }, [searchParams]);
+
+  if (!mounted) return <div className="min-h-screen bg-white" />;
 
   // ==========================================
   // VIEW: TENANT DETAIL
   // ==========================================
   if (view === "detail" && selectedTenant) {
      return (
-        <div className="min-h-screen bg-[#F8FAFB] animate-in slide-in-from-right duration-500 font-body pb-10">
+        <div className="min-h-screen bg-white animate-in slide-in-from-right duration-500 font-body pb-10">
            {/* Header */}
-           <header className="bg-[#E2E8F0]/40 px-6 py-5 flex items-center justify-between sticky top-0 z-50">
-              <button onClick={() => setView("list")} className="p-2 -ml-2 text-[#00685F]">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+           <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-50">
+              <button onClick={() => router.push('?view=list')} className="text-[#00685F] active:scale-90 transition-transform">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
               </button>
-              <h2 className="text-lg font-bold text-[#00685F]">Tenant Profile</h2>
-              <button className="p-2 text-[#00685F]">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-              </button>
+              <h1 className="text-xl font-black text-[#1A2B28]">Tenant Profile</h1>
            </header>
 
            <main className="px-5 py-6 space-y-6">
@@ -235,7 +254,7 @@ export default function TenantsPage() {
                        Message Tenant
                     </button>
                  </div>
-                 <button className="w-full bg-white border border-red-100 py-4 rounded-[18px] text-sm font-bold text-red-500 shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-red-50 transition-colors">
+                 <button className="w-full bg-white border border-red-100 py-4 rounded-[18px] text-sm font-bold text-red-500 shadow-sm flex items-center justify-center gap-2 active:scale-95 hover:bg-red-50 transition-colors">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="22" y2="13"/><line x1="22" y1="8" x2="17" y2="13"/></svg>
                     Remove Tenant
                  </button>
@@ -250,45 +269,44 @@ export default function TenantsPage() {
   // ==========================================
   if (view === "list") {
     return (
-       <div className="min-h-screen bg-[#F8FAFB] animate-in fade-in duration-500 font-body pb-32">
-          <header className="bg-white px-6 py-6 flex items-center justify-between sticky top-0 z-50">
-             <button onClick={() => setView("menu")} className="p-2 -ml-2 text-[#718096]">
+       <div className="min-h-screen bg-white animate-in fade-in duration-500 font-body pb-32">
+          <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-50">
+             <button onClick={() => router.push('/tenants')} className="text-[#00685F] active:scale-90 transition-transform">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
              </button>
-             <div className="flex flex-col items-center">
-                <h1 className="text-[18px] font-bold text-[#1A2B28] leading-none uppercase tracking-widest font-heading">Resident List</h1>
-                <span className="text-[10px] font-bold text-[#008075] mt-2 uppercase tracking-widest">{tenants.length} TOTAL TENANTS</span>
+             <div className="flex flex-col">
+                <h1 className="text-xl font-black text-[#1A2B28]">Resident List</h1>
+                <span className="text-[10px] font-bold text-[#008075] uppercase tracking-widest mt-0.5">{tenants.length} Total Tenants</span>
              </div>
-             <div className="w-10" />
           </header>
 
-          <main className="p-6 space-y-4">
+          <main className="p-4 space-y-3">
              {tenants.map((tenant) => (
-                <div key={tenant.id} className="bg-white rounded-[32px] p-6 shadow-sm border border-slate-50 space-y-6">
+                <div key={tenant.id} className="bg-[#F8FAFB] rounded-[28px] p-5 border border-slate-50 space-y-5">
                    <div className="flex items-center justify-between">
                       <button 
-                        onClick={() => { setSelectedTenant(tenant); setView("detail"); }}
+                        onClick={() => router.push(`?view=detail&id=${tenant.id}`)}
                         className="flex items-center gap-4 text-left group"
                       >
-                         <div className={`w-14 h-14 ${tenant.id === 1 ? 'bg-[#00675B]' : 'bg-slate-200'} rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 shadow-sm`}>
-                            <span className={`text-xl font-black ${tenant.id === 1 ? 'text-white' : 'text-slate-500'}`}>{tenant.initials}</span>
+                         <div className={`w-12 h-12 ${tenant.id === 1 ? 'bg-[#00675B]' : 'bg-slate-200'} rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 shadow-sm`}>
+                            <span className={`text-lg font-black ${tenant.id === 1 ? 'text-white' : 'text-slate-500'}`}>{tenant.initials}</span>
                          </div>
                          <div className="flex flex-col">
-                            <span className="text-xl font-black text-[#1A2B28] group-hover:text-[#00685F] transition-colors">{tenant.name}</span>
-                            <span className="text-[10px] font-bold text-[#ABB3B8] uppercase tracking-widest mt-0.5">{tenant.room} • {tenant.floor}</span>
+                            <span className="text-[17px] font-black text-[#1A2B28] group-hover:text-[#00685F] transition-colors">{tenant.name}</span>
+                            <span className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest mt-0.5">{tenant.room} • {tenant.floor}</span>
                          </div>
                       </button>
-                      <a href={`tel:${tenant.phone.replace(/ /g, '')}`} className="bg-[#F8FAFB] p-3.5 rounded-2xl text-[#008075] border border-slate-50 hover:bg-[#EBFBF8] shadow-sm transition-all active:scale-90">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                      <a href={`tel:${tenant.phone.replace(/ /g, '')}`} className="bg-white p-3 rounded-xl text-[#008075] border border-slate-50 hover:bg-[#EBFBF8] shadow-sm transition-all active:scale-90">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                       </a>
                    </div>
-
-                   <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+ 
+                   <div className="flex items-center justify-between pt-4 border-t border-slate-200/50">
                       <div className="flex flex-col">
-                         <span className="text-[9px] font-bold text-[#ABB3B8] uppercase tracking-widest">Monthly Rent</span>
-                         <span className="text-2xl font-black text-[#00685F] mt-1">{tenant.rent}</span>
+                         <span className="text-[8px] font-bold text-[#ABB3B8] uppercase tracking-widest">Monthly Rent</span>
+                         <span className="text-xl font-black text-[#00685F] mt-0.5">{tenant.rent}</span>
                       </div>
-                      <div className={`px-5 py-2 rounded-full text-[9px] font-black tracking-widest ${
+                      <div className={`px-4 py-1.5 rounded-full text-[8px] font-black tracking-widest ${
                         tenant.status === 'ACTIVE' ? 'bg-[#EBFBF8] text-[#008075]' : 'bg-orange-50 text-orange-600'
                       }`}>
                          {tenant.status}
@@ -305,12 +323,12 @@ export default function TenantsPage() {
   // VIEW: MENU
   // ==========================================
   return (
-    <div className="min-h-screen bg-[#F8FAFB] font-body pb-12">
-      <header className="bg-white px-6 py-6 flex items-center gap-4 shadow-sm sticky top-0 z-50">
-        <button onClick={() => router.back()} className="p-2 hover:bg-[#F1F4F8] rounded-full transition-colors">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A2B28" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    <div className="min-h-screen bg-white font-body pb-12">
+      <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-50">
+        <button onClick={() => router.back()} className="text-[#00685F] active:scale-90 transition-transform">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h1 className="text-xl font-bold text-[#1A2B28]">Manage Tenants</h1>
+        <h1 className="text-xl font-black text-[#1A2B28]">Manage Tenants</h1>
       </header>
 
       <main className="px-6 pt-8 space-y-8">
@@ -329,12 +347,12 @@ export default function TenantsPage() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-xl font-black text-[#1A2B28]">Add Tenant</span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#ABB3B8] mt-1">New Onboarding</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ABB3B8] mt-1">New Onboarding</span>
             </div>
           </button>
 
           <button 
-            onClick={() => setView("list")}
+            onClick={() => router.push('?view=list')}
             className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
           >
             <div className={`bg-[#00685F] text-white p-4.5 rounded-2xl shadow-lg shadow-[#00685F]/10`}>
@@ -342,7 +360,7 @@ export default function TenantsPage() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-xl font-black text-[#1A2B28]">View Tenants</span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#ABB3B8] mt-1">Manage Profiles</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ABB3B8] mt-1">Manage Profiles</span>
             </div>
           </button>
 
@@ -355,7 +373,7 @@ export default function TenantsPage() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-xl font-bold text-[#1A2B28] font-body">Remove Tenant</span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#ABB3B8] mt-1 font-body">Process Exit</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ABB3B8] mt-1 font-body">Process Exit</span>
             </div>
           </button>
         </div>

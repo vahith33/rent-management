@@ -40,6 +40,10 @@ function OtpVerifyContent() {
   const role = searchParams.get("role") || "owner";
 
   const handleVerify = () => {
+    if (otp.join("") !== "123456") {
+      alert("Invalid OTP. Please use 123456");
+      return;
+    }
     setSuccess(true);
     // Navigate after success toast
     setTimeout(() => {
@@ -60,7 +64,7 @@ function OtpVerifyContent() {
         <header className="mb-10 pl-2">
           <h2 className="text-[28px] font-bold text-[#1A2B28] mb-1">Verify your number</h2>
           <p className="text-[#718096] font-medium text-[15px]">
-            OTP sent to <span className="text-[#1A2B28] font-bold">+91 98765 43210</span>
+            OTP sent to <span className="text-[#1A2B28] font-bold">+91 93636 58160</span>
             <button onClick={() => router.push("/login")} className="ml-2 text-[#008075] font-bold hover:underline decoration-2">Change</button>
           </p>
         </header>
@@ -112,7 +116,7 @@ function OtpVerifyContent() {
             </div>
             <div className="flex flex-col">
               <h3 className="text-white font-bold leading-none mb-1">Success</h3>
-              <p className="text-[#94A3B8] text-sm font-medium tracking-tight">Welcome back, Ravi Kumar!</p>
+              <p className="text-[#94A3B8] text-sm font-medium tracking-tight">Welcome back, {role === 'owner' ? 'Suresh Kumar' : 'Ravi Kumar'}!</p>
             </div>
           </div>
         </div>

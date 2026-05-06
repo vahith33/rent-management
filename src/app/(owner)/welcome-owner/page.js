@@ -1,6 +1,10 @@
+"use client";
+
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function WelcomePage() {
+  const router = useRouter();
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-between py-12 px-6 safe-top safe-bottom">
       {/* Decorative top-right element */}
@@ -38,7 +42,7 @@ export default function WelcomePage() {
 
         {/* Property Grid */}
         <div className="grid grid-cols-3 gap-3 w-full mt-8">
-          <div className="aspect-[4/5] rounded-2xl overflow-hidden relative shadow-sm">
+          <div className="aspect-4/5 rounded-2xl overflow-hidden relative shadow-sm">
             <Image 
               src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=800" 
               alt="Apartment Interior" 
@@ -46,7 +50,7 @@ export default function WelcomePage() {
               className="object-cover"
             />
           </div>
-          <div className="aspect-[4/5] rounded-2xl overflow-hidden relative shadow-sm">
+          <div className="aspect-4/5 rounded-2xl overflow-hidden relative shadow-sm">
             <Image 
               src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800" 
               alt="Building Exterior" 
@@ -54,7 +58,7 @@ export default function WelcomePage() {
               className="object-cover"
             />
           </div>
-          <div className="aspect-[4/5] rounded-2xl overflow-hidden relative shadow-sm">
+          <div className="aspect-4/5 rounded-2xl overflow-hidden relative shadow-sm">
             <Image 
               src="https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&q=80&w=800" 
               alt="Living Room" 
@@ -68,7 +72,7 @@ export default function WelcomePage() {
       {/* Continue Button */}
       <div className="w-full max-w-sm mt-12">
         <button 
-          onClick={() => window.location.href = '/dashboard'}
+          onClick={() => router.push('/dashboard')}
           className="w-full bg-[#00624E] py-5 rounded-[22px] text-white font-bold text-lg shadow-xl shadow-teal-900/20 active:scale-[0.98] transition-all hover:bg-[#004D3D]"
         >
           Continue to Dashboard
