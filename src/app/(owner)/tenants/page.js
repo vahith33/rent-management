@@ -3,43 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-
-const tenants = [
-  {
-    id: 1,
-    name: "Arjun Sharma",
-    room: "Room 302-B",
-    floor: "2nd Floor",
-    status: "ACTIVE",
-    rent: "₹18,500",
-    deposit: "₹20,000",
-    phone: "+91 98765 43210",
-    email: "arjun.s@gmail.com",
-    moveIn: "15 Jan 2024",
-    period: "11 Months",
-    govId: "Aadhaar",
-    initials: "AS",
-    color: "bg-[#00675B]",
-    textColor: "text-white"
-  },
-  {
-    id: 2,
-    name: "Riya Kapoor",
-    room: "Room 105-A",
-    floor: "1st Floor",
-    status: "NOTICE",
-    rent: "₹16,000",
-    deposit: "₹15,000",
-    phone: "+91 99988 77665",
-    email: "riya.k@hotmail.com",
-    moveIn: "05 Mar 2024",
-    period: "12 Months",
-    govId: "Aadhaar",
-    initials: "RK",
-    color: "bg-orange-50",
-    textColor: "text-orange-600"
-  }
-];
+import { getTenants, removeTenant } from '@/actions/owner';
 
 export default function TenantsPage() {
   const router = useRouter();
@@ -48,16 +12,31 @@ export default function TenantsPage() {
   const [view, setView] = useState("menu"); // "menu", "list", "detail"
   const [selectedTenant, setSelectedTenant] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [tenants, setTenants] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
+    const fetchData = async () => {
+      setLoading(true);
+      const data = await getTenants();
+      setTenants(data);
+      setLoading(false);
+      setMounted(true);
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
     const v = searchParams.get('view');
     const id = searchParams.get('id');
     
     if (v === 'list') {
       setView('list');
     } else if (v === 'detail' && id) {
-      const tenant = tenants.find(t => t.id === parseInt(id));
+      const tenant = tenants.find(t => t.id === id || t.id === parseInt(id));
       if (tenant) {
         setSelectedTenant(tenant);
         setView('detail');
@@ -65,9 +44,23 @@ export default function TenantsPage() {
     } else {
       setView('menu');
     }
-  }, [searchParams]);
+  }, [searchParams, mounted, tenants]);
 
   if (!mounted) return <div className="min-h-screen bg-white" />;
+
+  const handleRemove = async () => {
+    if (!confirm(`Are you sure you want to remove ${selectedTenant.name}?`)) return;
+    
+    const result = await removeTenant(selectedTenant.id);
+    if (result.success) {
+      router.push('?view=list');
+      router.refresh();
+      // Also update local state
+      setTenants(tenants.filter(t => t.id !== selectedTenant.id));
+    } else {
+      alert("Failed to remove tenant: " + result.error);
+    }
+  };
 
   // ==========================================
   // VIEW: TENANT DETAIL
@@ -75,14 +68,6 @@ export default function TenantsPage() {
   if (view === "detail" && selectedTenant) {
      return (
         <div className="min-h-screen bg-white animate-in slide-in-from-right duration-500 font-body pb-10">
-           {/* Header */}
-           <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-50">
-              <button onClick={() => router.push('?view=list')} className="text-[#00685F] active:scale-90 transition-transform">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-              </button>
-              <h1 className="text-xl font-black text-[#1A2B28]">Tenant Profile</h1>
-           </header>
-
            <main className="px-5 py-6 space-y-6">
               {/* Hero Card */}
               <div className="bg-white rounded-[32px] p-8 flex flex-col items-center text-center shadow-[0_4px_25px_rgba(0,0,0,0.03)] border border-slate-50 relative overflow-hidden">
@@ -90,7 +75,7 @@ export default function TenantsPage() {
                     <div className="w-28 h-28 bg-[#00675B] rounded-full flex items-center justify-center text-white text-3xl font-bold">
                        {selectedTenant.initials}
                     </div>
-                    {selectedTenant.status === 'ACTIVE' && (
+                    {(selectedTenant.status === 'ACTIVE' || selectedTenant.status === 'active') && (
                        <div className="absolute bottom-1 right-1 w-6 h-6 bg-[#00D084] border-4 border-white rounded-full"></div>
                     )}
                  </div>
@@ -132,15 +117,6 @@ export default function TenantsPage() {
                        </div>
                        <div className="text-[#008075]">
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                       </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                       <div>
-                          <p className="text-[12px] font-bold text-[#718096] mb-0.5">Email</p>
-                          <p className="text-sm font-bold text-[#1A2B28]">{selectedTenant.email}</p>
-                       </div>
-                       <div className="text-[#008075]">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                        </div>
                     </div>
                     <div>
@@ -192,9 +168,7 @@ export default function TenantsPage() {
                  
                  <div className="space-y-6 pt-2">
                     {[
-                       { month: "March Rent", date: "05 Mar 2024" },
-                       { month: "February Rent", date: "03 Feb 2024" },
-                       { month: "January Rent", date: "15 Jan 2024" }
+                       { month: "Current Month", date: "Due Soon" }
                     ].map((payment, i) => (
                        <div key={i} className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
@@ -208,7 +182,7 @@ export default function TenantsPage() {
                           </div>
                           <div className="text-right">
                              <p className="text-sm font-bold text-[#1A2B28]">{selectedTenant.rent}</p>
-                             <span className="text-[10px] font-black text-[#008075]">Paid</span>
+                             <span className="text-[10px] font-black text-[#008075]">Pending</span>
                           </div>
                        </div>
                     ))}
@@ -226,9 +200,7 @@ export default function TenantsPage() {
                  
                  <div className="space-y-3 pt-2">
                     {[
-                       { name: "Aadhaar Card", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21h-2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><rect x="14" y="3" width="7" height="18" rx="1"/><path d="M10 8h4"/><path d="M10 12h4"/><path d="M10 16h4"/></svg> },
-                       { name: "Rental Agreement", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
-                       { name: "Photo", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> }
+                       { name: "Identity Proof", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21h-2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><rect x="14" y="3" width="7" height="18" rx="1"/><path d="M10 8h4"/><path d="M10 12h4"/><path d="M10 16h4"/></svg> }
                     ].map((doc, i) => (
                        <div key={i} className="flex items-center justify-between bg-[#F1F4F8] p-4 rounded-2xl border border-slate-50">
                           <div className="flex items-center gap-4">
@@ -255,7 +227,10 @@ export default function TenantsPage() {
                        Message Tenant
                     </button>
                  </div>
-                 <button className="w-full bg-white border border-red-100 py-4 rounded-[18px] text-sm font-bold text-red-500 shadow-sm flex items-center justify-center gap-2 active:scale-95 hover:bg-red-50 transition-colors">
+                 <button 
+                   onClick={handleRemove}
+                   className="w-full bg-white border border-red-100 py-4 rounded-[18px] text-sm font-bold text-red-500 shadow-sm flex items-center justify-center gap-2 active:scale-95 hover:bg-red-50 transition-colors"
+                 >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="22" y2="13"/><line x1="22" y1="8" x2="17" y2="13"/></svg>
                     Remove Tenant
                  </button>
@@ -276,21 +251,8 @@ export default function TenantsPage() {
   if (view === "list") {
     return (
        <div className="min-h-screen bg-[#F8FAFB] animate-in fade-in duration-500 font-body pb-32">
-          <header className="px-4 py-6 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-100 shadow-sm">
-             <button onClick={() => router.push('/tenants')} className="p-2 hover:bg-[#F1F4F8] rounded-full transition-colors text-[#00685F]">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-             </button>
-             <div className="flex flex-col">
-                <h1 className="text-xl font-black text-[#1A2B28]">Resident List</h1>
-                <span className="text-[12px] font-bold text-[#008075] mt-0.5">{tenants.length} Total Tenants</span>
-             </div>
-          </header>
+          <main className="px-6 py-3 space-y-5">
 
-          <main className="px-6 py-8 space-y-8">
-             <div className="space-y-2">
-                <h2 className="text-[22px] font-bold text-[#1A2B28] font-heading">Tenant Directory</h2>
-                <p className="text-[14px] font-medium text-[#718096]">Manage and connect with your residents</p>
-             </div>
 
              {/* Search Bar */}
              <div className="relative group">
@@ -322,7 +284,7 @@ export default function TenantsPage() {
                                </div>
                                <div className="flex flex-col">
                                   <span className="text-[16px] font-black text-[#1A2B28]">{tenant.name}</span>
-                                  <span className="text-[12px] font-bold text-[#718096] mt-0.5">Resident</span>
+                                  <span className="text-[12px] font-bold text-[#008075] mt-0.5">{tenant.phone}</span>
                                </div>
                             </button>
                             <a 
@@ -372,12 +334,6 @@ export default function TenantsPage() {
   // ==========================================
   return (
     <div className="min-h-screen bg-white font-body pb-12">
-      <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-50">
-        <button onClick={() => router.back()} className="text-[#00685F] active:scale-90 transition-transform">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        </button>
-        <h1 className="text-xl font-black text-[#1A2B28]">Manage Tenants</h1>
-      </header>
 
       <main className="px-6 pt-8 space-y-8">
         <div className="space-y-2 text-left">

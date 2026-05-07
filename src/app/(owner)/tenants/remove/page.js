@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getTenants, removeTenant } from '@/actions/owner';
 
 export default function RemoveTenantPage() {
   const router = useRouter();
@@ -10,14 +11,18 @@ export default function RemoveTenantPage() {
   const [selectedTenant, setSelectedTenant] = useState(null);
   const [isRemoving, setIsRemoving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [tenants, setTenants] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const initialTenants = [
-    { id: 1, name: "Arjun Sharma", room: "302-B", initials: "AS", color: "bg-[#00675B]" },
-    { id: 2, name: "Riya Kapoor", room: "105-A", initials: "RK", color: "bg-orange-50", textColor: "text-orange-600" },
-    { id: 3, name: "Sahil Varma", room: "201-C", initials: "SV", color: "bg-blue-50", textColor: "text-blue-600" },
-  ];
-
-  const [tenants, setTenants] = useState(initialTenants);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const data = await getTenants();
+      setTenants(data);
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
 
   const filteredTenants = tenants.filter(t => 
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -29,15 +34,25 @@ export default function RemoveTenantPage() {
     setShowConfirm(true);
   };
 
-  const handleConfirmRemove = () => {
+  const handleConfirmRemove = async () => {
+    if (!selectedTenant) return;
+    
     setIsRemoving(true);
-    setTimeout(() => {
-      setTenants(tenants.filter(t => t.id !== selectedTenant.id));
+    try {
+      const result = await removeTenant(selectedTenant.id);
+      if (result.success) {
+        setTenants(tenants.filter(t => t.id !== selectedTenant.id));
+        setShowConfirm(false);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2000);
+      } else {
+        alert("Failed to remove tenant: " + result.error);
+      }
+    } catch (err) {
+      alert("An unexpected error occurred");
+    } finally {
       setIsRemoving(false);
-      setShowConfirm(false);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-    }, 1200);
+    }
   };
 
   return (

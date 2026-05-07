@@ -1,23 +1,73 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createTenant } from '@/actions/owner';
 
-export default function AddTenantPage() {
+function AddTenantForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  // Form State - Initialize from searchParams if available
+  const [formData, setFormData] = useState({
+    name: searchParams.get('name') || '',
+    phone: searchParams.get('phone') || '',
+    gender: searchParams.get('gender') || 'Male',
+    rent: searchParams.get('rent') || '',
+    deposit: searchParams.get('deposit') || '',
+    move_in_date: searchParams.get('move_in_date') || new Date().toISOString().split('T')[0],
+    agreement_period: searchParams.get('agreement_period') || '11 Months',
+    id_type: searchParams.get('id_type') || 'Aadhaar',
+    id_number: searchParams.get('id_number') || '',
+    emergency_contact_name: searchParams.get('emergency_contact_name') || '',
+    emergency_contact_phone: searchParams.get('emergency_contact_phone') || '',
+    roomId: searchParams.get('selectedRoomId') || '',
+    bedId: searchParams.get('selectedBedId') || ''
+  });
 
-  const handleSave = () => {
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleSave = async () => {
+    if (!formData.name || !formData.phone) {
+      setError("Name and Phone are required");
+      return;
+    }
+
     setIsSaving(true);
-    setTimeout(() => {
+    setError(null);
+    
+    try {
+      const result = await createTenant(formData);
+      
+      if (result.success) {
+        setShowSuccess(true);
+        setTimeout(() => {
+          router.push('/tenants');
+          router.refresh();
+        }, 1500);
+      } else {
+        setError(result.error || "Failed to save tenant");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred");
+    } finally {
       setIsSaving(false);
-      setShowSuccess(true);
-      setTimeout(() => {
-        router.push('/tenants');
-      }, 1500);
-    }, 1200);
+    }
   };
+
+  const navigateToSelection = () => {
+    const params = new URLSearchParams(formData);
+    router.push(`/tenants/add/select-room?${params.toString()}`);
+  };
+
+  if (!mounted) return <div className="min-h-screen bg-white" />;
 
   return (
     <div className={`min-h-screen bg-white pb-20 transition-all duration-500 ${showSuccess ? 'blur-md scale-[0.98]' : ''}`}>
@@ -37,18 +87,13 @@ export default function AddTenantPage() {
         </div>
       )}
 
-      {/* Header */}
-      <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50">
-        <button onClick={() => router.back()} className="text-[#00685F] active:scale-90 transition-transform">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </svg>
-        </button>
-        <h1 className="text-xl font-black text-[#1A2B28]">Add New Tenant</h1>
-      </header>
+      {error && (
+        <div className="mx-6 mt-4 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold animate-in fade-in slide-in-from-top-2">
+          {error}
+        </div>
+      )}
 
-      <main className="px-4 space-y-4">
+      <main className="px-4 space-y-4 pt-6 font-body">
         {/* PERSONAL DETAILS SECTION */}
         <section className="bg-[#F8FAFB] rounded-[32px] p-5 space-y-5 border border-slate-50">
           <div className="flex items-center gap-3">
@@ -57,10 +102,12 @@ export default function AddTenantPage() {
           </div>
           
           <div className="space-y-2">
-            <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1 font-body">Full Name</label>
+            <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Full Name</label>
             <input 
               type="text" 
               placeholder="e.g. Alexander Mitchell"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] placeholder-[#ADB5BD] outline-none"
             />
           </div>
@@ -70,22 +117,84 @@ export default function AddTenantPage() {
                  <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Phone</label>
                 <input 
                   type="tel" 
-                  placeholder="+1 (555) 000-0000" 
+                  placeholder="+91 90000 00000" 
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none" 
                 />
              </div>
              <div className="flex-1 space-y-2">
                  <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Gender</label>
                 <div className="relative">
-                  <select className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none font-medium appearance-none text-[14px] font-body">
-                      <option>Select</option>
+                  <select 
+                    value={formData.gender}
+                    onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                    className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none appearance-none font-medium"
+                  >
                       <option>Male</option>
                       <option>Female</option>
+                      <option>Other</option>
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#718096]">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                 </div>
+             </div>
+          </div>
+        </section>
+
+        {/* FINANCIAL & STAY DETAILS */}
+        <section className="bg-[#F8FAFB] rounded-[32px] p-5 space-y-5 border border-slate-50">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 bg-[#00685F] rounded-full"></div>
+            <h2 className="text-[16px] font-black text-[#1A2B28]">Financial & Stay</h2>
+          </div>
+          
+          <div className="flex gap-4">
+             <div className="flex-1 space-y-2">
+                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Monthly Rent</label>
+                <input 
+                  type="number" 
+                  placeholder="₹0.00" 
+                  value={formData.rent}
+                  onChange={(e) => setFormData({...formData, rent: e.target.value})}
+                  className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none" 
+                />
+             </div>
+             <div className="flex-1 space-y-2">
+                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Security Deposit</label>
+                <input 
+                  type="number" 
+                  placeholder="₹0.00" 
+                  value={formData.deposit}
+                  onChange={(e) => setFormData({...formData, deposit: e.target.value})}
+                  className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none" 
+                />
+             </div>
+          </div>
+
+          <div className="flex gap-4">
+             <div className="flex-1 space-y-2">
+                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Move-in Date</label>
+                <input 
+                  type="date" 
+                  value={formData.move_in_date}
+                  onChange={(e) => setFormData({...formData, move_in_date: e.target.value})}
+                  className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none" 
+                />
+             </div>
+             <div className="flex-1 space-y-2">
+                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Agreement</label>
+                <select 
+                  value={formData.agreement_period}
+                  onChange={(e) => setFormData({...formData, agreement_period: e.target.value})}
+                  className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none appearance-none font-medium"
+                >
+                  <option>11 Months</option>
+                  <option>12 Months</option>
+                  <option>6 Months</option>
+                  <option>Monthly</option>
+                </select>
              </div>
           </div>
         </section>
@@ -99,11 +208,15 @@ export default function AddTenantPage() {
           
           <div className="pt-2">
              <button 
-               onClick={() => router.push('/tenants/add/select-room')}
-               className="w-full bg-white p-5 rounded-[26px] flex items-center justify-between border-2 border-[#EBFBF8] hover:border-[#00685F]/30 transition-all group active:scale-[0.98]"
+               onClick={navigateToSelection}
+               className={`w-full p-5 rounded-[26px] flex items-center justify-between border-2 transition-all group active:scale-[0.98] ${
+                 formData.roomId ? 'bg-white border-[#00685F]/20 shadow-sm' : 'bg-white border-[#EBFBF8] hover:border-[#00685F]/30'
+               }`}
              >
                 <div className="flex items-center gap-5">
-                   <div className="bg-[#EBFBF8] p-3.5 rounded-2xl text-[#00685F] shadow-sm transform group-hover:scale-105 transition-transform">
+                   <div className={`p-3.5 rounded-2xl shadow-sm transform group-hover:scale-105 transition-transform ${
+                     formData.roomId ? 'bg-[#00685F] text-white' : 'bg-[#EBFBF8] text-[#00685F]'
+                   }`}>
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M3 21h18"/>
                         <path d="M5 21V7l7-4 7 4v14"/>
@@ -111,11 +224,17 @@ export default function AddTenantPage() {
                       </svg>
                    </div>
                    <div className="flex flex-col text-left">
-                      <span className="text-[15px] font-black text-[#1A2B28]">Select Suite</span>
-                      <span className="text-[12px] font-black text-[#00685F] mt-1.5 leading-none">Room Allocation Tool</span>
+                      <span className="text-[15px] font-black text-[#1A2B28]">
+                        {formData.bedId ? `Bed ${formData.bedId}` : formData.roomId ? `Suite Selected` : 'Select Suite'}
+                      </span>
+                      <span className={`text-[12px] font-black mt-1.5 leading-none uppercase tracking-widest ${
+                        formData.roomId ? 'text-[#00685F]' : 'text-[#ADB5BD]'
+                      }`}>
+                        {formData.roomId ? 'Live Allocation Ready' : 'Room Allocation Tool'}
+                      </span>
                    </div>
                 </div>
-                <div className="text-[#ADB5BD] group-hover:text-[#00685F] group-hover:translate-x-1 transition-all">
+                <div className={`transition-all ${formData.roomId ? 'text-[#00685F]' : 'text-[#ADB5BD]'} group-hover:translate-x-1`}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
              </button>
@@ -132,8 +251,16 @@ export default function AddTenantPage() {
              <div className="flex-1 space-y-2">
                  <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">ID Type</label>
                 <div className="relative">
-                  <select className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none appearance-none">
+                  <select 
+                    value={formData.id_type}
+                    onChange={(e) => setFormData({...formData, id_type: e.target.value})}
+                    className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none appearance-none font-medium"
+                  >
+                    <option>Aadhaar</option>
+                    <option>PAN Card</option>
                     <option>Passport</option>
+                    <option>Voter ID</option>
+                    <option>Driving License</option>
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#718096]">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -142,20 +269,13 @@ export default function AddTenantPage() {
              </div>
              <div className="flex-1 space-y-2">
                  <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">ID Number</label>
-                <input type="text" placeholder="E1234567" className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none" />
-             </div>
-          </div>
-          <div className="w-full border-2 border-dashed border-[#DEE3E8] rounded-[24px] py-8 flex flex-col items-center gap-3 bg-white hover:bg-[#EEF2F8] transition-all cursor-pointer group">
-             <div className="text-[#00685F] group-hover:scale-110 transition-transform">
-               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                 <polyline points="17 8 12 3 7 8"/>
-                 <line x1="12" y1="3" x2="12" y2="15"/>
-               </svg>
-             </div>
-             <div className="text-center font-bold">
-                <p className="text-[15px]! text-[#1A2B28] font-bold">Successfully Added!</p>
-                <p className="text-[12px] text-[#ABB3B8] mt-1">PDF, JPG or PNG</p>
+                <input 
+                  type="text" 
+                  placeholder="ID Number" 
+                  value={formData.id_number}
+                  onChange={(e) => setFormData({...formData, id_number: e.target.value})}
+                  className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none font-medium" 
+                />
              </div>
           </div>
         </section>
@@ -169,11 +289,23 @@ export default function AddTenantPage() {
           <div className="space-y-4">
              <div className="space-y-2">
                  <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Contact Name</label>
-                <input type="text" placeholder="Full name of contact" className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none" />
+                <input 
+                  type="text" 
+                  placeholder="Full name of contact" 
+                  value={formData.emergency_contact_name}
+                  onChange={(e) => setFormData({...formData, emergency_contact_name: e.target.value})}
+                  className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none font-medium" 
+                />
              </div>
              <div className="space-y-2">
                  <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Phone Number</label>
-                <input type="tel" placeholder="+1 (555) 000-0000" className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none" />
+                <input 
+                  type="tel" 
+                  placeholder="+91 90000 00000" 
+                  value={formData.emergency_contact_phone}
+                  onChange={(e) => setFormData({...formData, emergency_contact_phone: e.target.value})}
+                  className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none font-medium" 
+                />
              </div>
           </div>
         </section>
@@ -182,25 +314,33 @@ export default function AddTenantPage() {
       <footer className="px-4 pt-10 pb-10 flex gap-4">
         <button 
           onClick={() => router.back()} 
-          className="flex-1 bg-[#EEF2F8] p-5 rounded-[20px] text-[#1A2B28] font-bold hover:bg-slate-200 transition-colors"
+          className="flex-1 bg-[#EEF2F8] p-5 rounded-[24px] text-[#1A2B28] font-black hover:bg-slate-200 transition-colors"
         >
           Cancel
         </button>
         <button 
           onClick={handleSave} 
           disabled={isSaving}
-          className={`flex-[1.2] bg-[#00685F] p-5 rounded-[20px] text-white font-black shadow-xl shadow-teal-900/10 flex items-center justify-center gap-3 ${isSaving ? 'opacity-80' : ''}`}
+          className={`flex-[1.2] bg-[#00685F] p-5 rounded-[24px] text-white font-black shadow-2xl shadow-teal-900/10 flex items-center justify-center gap-3 transition-all ${isSaving ? 'opacity-80 scale-95' : 'active:scale-95'}`}
         >
           {isSaving ? (
             <>
               <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-              Saving...
+              Finalizing...
             </>
           ) : (
-            'Save Tenant'
+            'Onboard Resident'
           )}
         </button>
       </footer>
     </div>
+  );
+}
+
+export default function AddTenantPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <AddTenantForm />
+    </Suspense>
   );
 }

@@ -1,0 +1,44 @@
+1. Typography (Fonts & Sizes)
+The application uses a modern typography hierarchy with varying weights to create clear visual contrast.
+
+Font Family: font-body (Primary sans-serif, typically Inter or Outfit).
+Page Titles: 30px to 36px (text-3xl), Black (900 weight).
+Section Headers: 20px to 22px, Bold (700 weight).
+Navigation Headers: 20px (text-xl), Black (900 weight).
+Body Text: 14px (text-[14px]), Medium (500 weight).
+Metadata/Labels: 10px to 12px, Bold (700 weight).
+Status Badges: 9px, Black (900 weight), All-caps.
+2. Color Palette
+The design uses a "Small & Elegant" professional palette:
+
+Primary Text: #1A2B28 (Deep Charcoal Green) — used for all main headings.
+Secondary Text: #718096 (Slate Grey) — used for descriptions and sub-labels.
+Tertiary Text: #ADB5BD (Silver) — used for placeholders and icons.
+Brand Teal (Primary): #00685F — used for active buttons and navigation icons.
+Brand Teal (Secondary): #008075 — used for highlights and successful states.
+Backgrounds:
+App Body: #F8FAFB (Soft Off-White/Blue tint).
+Cards/Headers: #FFFFFF (Pure White).
+Input Fields: #EEF2F8 (Light Grey-Blue).
+Status Colors:
+Vacant: Text: #008075 | BG: #EBFBF8
+Partial: Text: #EA580C | BG: #FFF7ED
+Occupied: Text: #EF4444 | BG: #FEF2F2
+3. Page Style & Layout
+Page Padding: px-6 py-8 (Horizontal: 24px, Vertical: 32px).
+Container Roundness:
+Main Cards: rounded-[28px] or rounded-[32px].
+Search Bar: rounded-[24px].
+Icon Containers: rounded-2xl (16px).
+Action Buttons: rounded-[20px].
+Spacing Hierarchy:
+Section Gaps: space-y-8 (32px).
+Card Internal Gaps: gap-4 to gap-6 (16px - 24px).
+Group Spacing: space-y-5 (20px).
+Borders & Shadows:
+Borders: 1px solid with border-slate-100 or border-slate-50.
+Shadows: shadow-sm for static cards; shadow-xl with color tint (e.g., shadow-teal-900/10) for active buttons.
+4. Interactive Effects
+Transitions: transition-all duration-300.
+Micro-interactions: active:scale-[0.98] (Subtle "press" effect on buttons).
+Hover States: hover:shadow-xl and hover:scale-[1.02] on inventory cards.

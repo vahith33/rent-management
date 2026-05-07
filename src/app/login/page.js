@@ -8,10 +8,10 @@ export default function LoginPage() {
   const [role, setRole] = useState("owner");
   const [mobileNumber, setMobileNumber] = useState("");
 
-  const handleMobileContinue = () => {
+  const handleMobileContinue = async () => {
     const cleanedNumber = mobileNumber.replace(/\D/g, "");
     if (cleanedNumber.length === 10) {
-      router.push(`/otp-verify?role=${role}`);
+        router.push(`/otp-verify?role=${role}&phone=${cleanedNumber}`);
     }
   };
 
@@ -55,6 +55,7 @@ export default function LoginPage() {
             </div>
             <input
               type="tel"
+              inputMode="numeric"
               placeholder="93636 58160"
               value={mobileNumber}
               onChange={(e) => setMobileNumber(e.target.value.replace(/[^\d\s]/g, ""))}

@@ -38,16 +38,28 @@ function OtpVerifyContent() {
 
   const searchParams = useSearchParams();
   const role = searchParams.get("role") || "owner";
+  const phone = searchParams.get("phone") || "";
 
-  const handleVerify = () => {
-    if (otp.join("") !== "123456") {
-      alert("Invalid OTP. Please use 123456");
-      return;
+  const handleVerify = async () => {
+    const enteredOtp = otp.join("")
+    if (enteredOtp !== "123456") {
+        alert("Invalid OTP. Please use 123456")
+        return
     }
+
+    // Set a mock cookie for development bypass
+    document.cookie = `mock_session_phone=${phone}; path=/; max-age=3600`
+
     setSuccess(true);
     // Navigate after success toast
     setTimeout(() => {
-      router.push(role === "tenant" ? "/welcome-tenant" : "/welcome-owner"); 
+      if (phone === "9952466714") {
+        router.push("/admin/dashboard");
+      } else if (role === "owner") {
+        router.push("/dashboard");
+      } else {
+        router.push("/welcome-tenant"); 
+      }
     }, 2000);
   };
 
@@ -64,7 +76,7 @@ function OtpVerifyContent() {
         <header className="mb-10 pl-2">
           <h2 className="text-[28px] font-bold text-[#1A2B28] mb-1">Verify your number</h2>
           <p className="text-[#718096] font-medium text-[15px]">
-            OTP sent to <span className="text-[#1A2B28] font-bold">+91 93636 58160</span>
+            OTP sent to <span className="text-[#1A2B28] font-bold">+91 {phone || "93636 58160"}</span>
             <button onClick={() => router.push("/login")} className="ml-2 text-[#008075] font-bold hover:underline decoration-2">Change</button>
           </p>
         </header>
@@ -75,6 +87,8 @@ function OtpVerifyContent() {
               key={i}
               ref={(el) => (otpRefs.current[i] = el)}
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               maxLength={1}
               value={digit}
               autoFocus={i === 0}

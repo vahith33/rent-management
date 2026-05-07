@@ -1,0 +1,207 @@
+'use server'
+
+import { createServiceRoleClient } from '../lib/supabase/service'
+
+export async function getAllPGs() {
+  const supabase = createServiceRoleClient()
+
+  const { data, error } = await supabase
+    .from('owners')
+    .select(`
+      id, name, phone, status, plan_rupee, admin_notes, created_at,
+      properties ( name, address ),
+      tenant_assignments ( id, status )
+    `)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching PGs:', error)
+    return []
+  }
+
+  // Transform data to match requested format
+  const formattedData = data.map((owner) => {
+    // property could be an array or object depending on relation type, assuming single property per owner based on query
+    const property = owner.properties && owner.properties.length > 0 ? owner.properties[0] : owner.properties || {}
+    
+    // count active tenants
+    const activeTenants = owner.tenant_assignments ? owner.tenant_assignments.filter((ta) => ta.status === 'active').length : 0
+
+    return {
+      id: owner.id,
+      name: owner.name,
+      phone: owner.phone,
+      status: owner.status,
+      plan_rupee: owner.plan_rupee,
+      admin_notes: owner.admin_notes,
+      created_at: owner.created_at,
+      property_name: property?.name || '',
+      address: property?.address || '',
+      tenant_count: activeTenants
+    }
+  })
+
+  return formattedData
+}
+
+export async function addPG(formData) {
+  const name = formData.get('name')
+  const phone = formData.get('phone')
+  const property_name = formData.get('property_name')
+  const address = formData.get('address')
+  const plan_rupee_str = formData.get('plan_rupee')
+  const admin_notes = formData.get('admin_notes')
+
+  if (!name || name.trim() === '') return { error: 'validation', fields: { name: 'Name is required' } }
+  if (!phone || !/^\d{10}$/.test(phone)) return { error: 'validation', fields: { phone: 'Enter a valid 10-digit mobile number' } }
+  if (!property_name || property_name.trim() === '') return { error: 'validation', fields: { property_name: 'Property name is required' } }
+  
+  let plan_rupee = null
+  if (plan_rupee_str) {
+    plan_rupee = parseFloat(plan_rupee_str)
+    if (isNaN(plan_rupee) || plan_rupee < 0) return { error: 'validation', fields: { plan_rupee: 'Must be a positive number' } }
+  }
+
+  const supabase = createServiceRoleClient()
+
+  // a. Check if phone already exists
+  const { data: existingUser } = await supabase.from('owners').select('id').eq('phone', phone).single()
+  if (existingUser) return { error: 'phone_exists', message: 'This number is already registered.' }
+
+  // b. Create Supabase Auth user
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    phone: '+91' + phone,
+    phone_confirm: true
+  })
+  if (authError) return { error: 'auth_failed', message: authError.message }
+
+  const userId = authData.user.id
+
+  // c. Insert into owners
+  const { data: newOwner, error: ownerError } = await supabase.from('owners').insert({
+    id: userId,
+    supabase_user_id: userId,
+    name,
+    phone,
+    plan_rupee,
+    admin_notes,
+    status: 'active'
+  }).select().single()
+
+  if (ownerError) {
+     // Rollback auth user
+     await supabase.auth.admin.deleteUser(userId)
+     return { error: 'db_error', message: ownerError.message }
+  }
+
+  // d. Insert into properties
+  const { error: propError } = await supabase.from('properties').insert({
+    owner_id: newOwner.id,
+    name: property_name,
+    address: address || null
+  })
+
+  if (propError) {
+    return { error: 'db_error', message: propError.message }
+  }
+
+  return { success: true, owner: newOwner }
+}
+
+export async function togglePGStatus(ownerId, currentStatus) {
+  const supabase = createServiceRoleClient()
+  
+  // Get supabase_user_id
+  const { data: owner } = await supabase.from('owners').select('supabase_user_id').eq('id', ownerId).single()
+  if (!owner || !owner.supabase_user_id) return { error: 'not_found' }
+
+  if (currentStatus === 'active') {
+    await supabase.from('owners').update({ status: 'disabled' }).eq('id', ownerId)
+    await supabase.auth.admin.updateUserById(owner.supabase_user_id, { ban_duration: '87600h' })
+  } else {
+    await supabase.from('owners').update({ status: 'active' }).eq('id', ownerId)
+    await supabase.auth.admin.updateUserById(owner.supabase_user_id, { ban_duration: 'none' })
+  }
+  return { success: true }
+}
+
+export async function deletePG(ownerId) {
+  const supabase = createServiceRoleClient()
+  
+  // a. Get supabase_user_id
+  const { data: owner } = await supabase.from('owners').select('supabase_user_id').eq('id', ownerId).single()
+  if (!owner) return { error: 'not_found' }
+
+  // b. Delete from owners
+  await supabase.from('owners').delete().eq('id', ownerId)
+
+  // c. Delete auth user
+  if (owner.supabase_user_id) {
+    await supabase.auth.admin.deleteUser(owner.supabase_user_id)
+  }
+
+  return { success: true }
+}
+
+export async function updatePG(ownerId, formData) {
+  const name = formData.get('name')
+  const property_name = formData.get('property_name')
+  const address = formData.get('address')
+  const plan_rupee_str = formData.get('plan_rupee')
+  const admin_notes = formData.get('admin_notes')
+
+  let plan_rupee = null
+  if (plan_rupee_str) {
+    plan_rupee = parseFloat(plan_rupee_str)
+  }
+
+  const supabase = createServiceRoleClient()
+  
+  await supabase.from('owners').update({
+    name,
+    plan_rupee,
+    admin_notes
+  }).eq('id', ownerId)
+
+  await supabase.from('properties').update({
+    name: property_name,
+    address
+  }).eq('owner_id', ownerId)
+
+  return { success: true }
+}
+
+export async function getPGById(ownerId) {
+  const supabase = createServiceRoleClient()
+
+  const { data: owner, error } = await supabase
+    .from('owners')
+    .select(`
+      id, name, phone, status, plan_rupee, admin_notes, created_at,
+      properties ( name, address ),
+      tenant_assignments ( id, status )
+    `)
+    .eq('id', ownerId)
+    .single()
+
+  if (error || !owner) {
+    console.error('Error fetching PG:', error)
+    return null
+  }
+
+  const property = owner.properties && owner.properties.length > 0 ? owner.properties[0] : owner.properties || {}
+  const activeTenants = owner.tenant_assignments ? owner.tenant_assignments.filter((ta) => ta.status === 'active').length : 0
+
+  return {
+    id: owner.id,
+    name: owner.name,
+    phone: owner.phone,
+    status: owner.status,
+    plan_rupee: owner.plan_rupee,
+    admin_notes: owner.admin_notes,
+    created_at: owner.created_at,
+    property_name: property?.name || '',
+    address: property?.address || '',
+    tenant_count: activeTenants
+  }
+}

@@ -1,10 +1,17 @@
-import BottomNav from "@/components/BottomNav";
+import OwnerLayoutClient from "@/components/owner/OwnerLayoutClient";
+import { getOwnerInfo } from "@/actions/owner";
+import { redirect } from "next/navigation";
 
-export default function OwnerLayout({ children }) {
+export default async function OwnerLayout({ children }) {
+  const ownerInfo = await getOwnerInfo()
+
+  if (!ownerInfo) {
+    redirect('/login')
+  }
+
   return (
-    <div className="min-h-screen bg-[#F8FAFB]">
+    <OwnerLayoutClient ownerInfo={ownerInfo}>
       {children}
-      <BottomNav />
-    </div>
+    </OwnerLayoutClient>
   );
 }
