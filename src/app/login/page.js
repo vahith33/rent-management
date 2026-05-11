@@ -2,17 +2,41 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
   const [role, setRole] = useState("owner");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleMobileContinue = async () => {
+    setError("");
     const cleanedNumber = mobileNumber.replace(/\D/g, "");
-    if (cleanedNumber.length === 10) {
-        router.push(`/otp-verify?role=${role}&phone=${cleanedNumber}`);
+    if (cleanedNumber.length !== 10) {
+      setError("Please enter a valid 10-digit number");
+      return;
     }
+
+    setIsLoading(true);
+    const supabase = createClient();
+    
+    // Standard E.164 format (Supabase will pass this to your new webhook)
+    const formattedPhone = `+91${cleanedNumber}`;
+
+    const { error: authError } = await supabase.auth.signInWithOtp({
+      phone: formattedPhone,
+    });
+
+    setIsLoading(false);
+
+    if (authError) {
+      setError(authError.message);
+      return;
+    }
+
+    router.push(`/otp-verify?role=${role}&phone=${cleanedNumber}`);
   };
 
   return (
@@ -33,6 +57,12 @@ export default function LoginPage() {
         <h2 className="text-[20px] font-bold leading-tight text-[#1A2B28] font-heading">
           Enter your mobile<br />number
         </h2>
+
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-bold animate-in fade-in zoom-in-95">
+            {error}
+          </div>
+        )}
 
         {/* Owner/Tenant Toggle */}
         <div className="flex bg-[#F1F4F8] p-1.5 rounded-2xl relative">
@@ -58,15 +88,26 @@ export default function LoginPage() {
               inputMode="numeric"
               placeholder="93636 58160"
               value={mobileNumber}
+              disabled={isLoading}
               onChange={(e) => setMobileNumber(e.target.value.replace(/[^\d\s]/g, ""))}
-              onKeyDown={(e) => e.key === "Enter" && handleMobileContinue()}
-              className="flex-1 bg-[#F1F4F8] px-5 py-4 rounded-2xl text-[14px] font-medium text-[#1A2B28] outline-none focus:bg-white focus:ring-2 focus:ring-[#008075] transition-all font-body"
+              onKeyDown={(e) => e.key === "Enter" && !isLoading && handleMobileContinue()}
+              className="flex-1 bg-[#F1F4F8] px-5 py-4 rounded-2xl text-[14px] font-medium text-[#1A2B28] outline-none focus:bg-white focus:ring-2 focus:ring-[#008075] transition-all font-body disabled:opacity-50"
             />
           </div>
-        </div>
+      </div>
 
-        <button onClick={handleMobileContinue} className="w-full bg-[#008075] py-4.5 rounded-2xl text-white font-bold flex items-center justify-center gap-2 group hover:bg-[#006E65] transition-all active:scale-[0.98] mt-2 shadow-lg shadow-[#008075]/20">
-          Send OTP <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="transition-transform group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <button 
+          onClick={handleMobileContinue} 
+          disabled={isLoading}
+          className="w-full bg-[#008075] py-4.5 rounded-2xl text-white font-bold flex items-center justify-center gap-2 group hover:bg-[#006E65] transition-all active:scale-[0.98] mt-2 shadow-lg shadow-[#008075]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          ) : (
+            <>
+              Send OTP <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="transition-transform group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </>
+          )}
         </button>
         <p className="text-center text-[12px] text-[#A0AEC0] leading-relaxed px-4 font-body">
           By continuing, you agree to our <a href="#" className="text-[#008075] font-semibold underline decoration-[#008075]/30">Terms</a> and <a href="#" className="text-[#008075] font-semibold underline decoration-[#008075]/30">Privacy</a>

@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-
+import { createClient } from "@/utils/supabase/client";
 import { Suspense } from 'react';
 
 function OtpVerifyContent() {
   const router = useRouter();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [success, setSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const otpRefs = useRef([]);
   const [timer, setTimer] = useState(42);
 
@@ -41,16 +43,34 @@ function OtpVerifyContent() {
   const phone = searchParams.get("phone") || "";
 
   const handleVerify = async () => {
-    const enteredOtp = otp.join("")
-    if (enteredOtp !== "123456") {
-        alert("Invalid OTP. Please use 123456")
-        return
+    setError("");
+    const enteredOtp = otp.join("");
+    if (enteredOtp.length !== 6) {
+      setError("Please enter the full 6-digit code");
+      return;
     }
 
-    // Set a mock cookie for development bypass
-    document.cookie = `mock_session_phone=${phone}; path=/; max-age=3600`
+    setIsLoading(true);
+    const supabase = createClient();
+    
+    // Format phone with +91 (Supabase will pass this to your new webhook)
+    const formattedPhone = `+91${phone}`;
+
+    const { data, error: authError } = await supabase.auth.verifyOtp({
+      phone: formattedPhone,
+      token: enteredOtp,
+      type: 'sms',
+    });
+
+    if (authError) {
+      setIsLoading(false);
+      setError(authError.message);
+      return;
+    }
 
     setSuccess(true);
+    setIsLoading(false);
+    
     // Navigate after success toast
     setTimeout(() => {
       if (phone === "9952466714") {
@@ -81,6 +101,12 @@ function OtpVerifyContent() {
           </p>
         </header>
 
+        {error && (
+          <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm font-bold mb-6 animate-in fade-in zoom-in-95">
+            {error}
+          </div>
+        )}
+
         <div className="flex gap-2.5 mb-8 justify-center">
           {otp.map((digit, i) => (
             <input
@@ -91,10 +117,11 @@ function OtpVerifyContent() {
               pattern="[0-9]*"
               maxLength={1}
               value={digit}
+              disabled={isLoading}
               autoFocus={i === 0}
               onChange={(e) => handleOtpChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
-              className={`w-[52px] h-[64px] rounded-2xl text-2xl font-bold text-center transition-all outline-none border-2 shadow-sm ${digit ? "bg-white border-[#008075] text-[#1A2B28] shadow-md" : "bg-[#F1F4F8] border-transparent text-[#1A2B28] focus:bg-white focus:border-[#008075] focus:shadow-md"}`}
+              className={`w-[52px] h-[64px] rounded-2xl text-2xl font-bold text-center transition-all outline-none border-2 shadow-sm ${digit ? "bg-white border-[#008075] text-[#1A2B28] shadow-md" : "bg-[#F1F4F8] border-transparent text-[#1A2B28] focus:bg-white focus:border-[#008075] focus:shadow-md"} disabled:opacity-50`}
             />
           ))}
         </div>
@@ -105,12 +132,19 @@ function OtpVerifyContent() {
 
         <button
           onClick={handleVerify}
-          className="w-full bg-[#008075] py-5 rounded-[22px] text-white font-bold flex items-center justify-center gap-3 text-lg hover:bg-[#006E65] shadow-xl shadow-[#008075]/25 active:scale-[0.98] transition-all group"
+          disabled={isLoading}
+          className="w-full bg-[#008075] py-5 rounded-[22px] text-white font-bold flex items-center justify-center gap-3 text-lg hover:bg-[#006E65] shadow-xl shadow-[#008075]/25 active:scale-[0.98] transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Verify & Sign In 
-          <div className="bg-white p-0.5 rounded-full flex items-center justify-center border-2 border-white/20 group-hover:bg-white transition-colors">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#008075" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
+          {isLoading ? (
+            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          ) : (
+            <>
+              Verify & Sign In 
+              <div className="bg-white p-0.5 rounded-full flex items-center justify-center border-2 border-white/20 group-hover:bg-white transition-colors">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#008075" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </>
+          )}
         </button>
 
         <p className="text-center text-[10.5px] text-[#A0AEC0] mt-10 leading-relaxed px-6">
@@ -130,7 +164,7 @@ function OtpVerifyContent() {
             </div>
             <div className="flex flex-col">
               <h3 className="text-white font-bold leading-none mb-1">Success</h3>
-              <p className="text-[#94A3B8] text-sm font-medium tracking-tight">Welcome back, {role === 'owner' ? 'Suresh Kumar' : 'Ravi Kumar'}!</p>
+              <p className="text-[#94A3B8] text-sm font-medium tracking-tight">Welcome back!</p>
             </div>
           </div>
         </div>

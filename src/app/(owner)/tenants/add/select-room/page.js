@@ -32,14 +32,19 @@ export default function SelectRoomPage() {
 
   const handleContinue = () => {
     if (!selectedRoomId) return;
-    router.push(`/tenants/add/select-bed?roomId=${selectedRoomId}`);
+    const params = new URLSearchParams(searchParams);
+    params.set('roomId', selectedRoomId);
+    router.push(`/tenants/add/select-bed?${params.toString()}`);
   };
 
   return (
     <div className="min-h-screen bg-[#F8FAFB] pb-40 font-body">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md px-6 py-5 flex items-center gap-4 sticky top-0 z-50 border-b border-slate-50">
-        <button onClick={() => router.back()} className="p-2 -ml-2 text-[#00685F] bg-[#EBFBF8] rounded-xl active:scale-90 transition-transform">
+        <button 
+          onClick={() => router.replace(`/tenants/add?${searchParams.toString()}`)} 
+          className="p-2 -ml-2 text-[#00685F] bg-[#EBFBF8] rounded-xl active:scale-90 transition-transform"
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
@@ -141,31 +146,53 @@ export default function SelectRoomPage() {
 
       {/* FOOTER SUMMARY */}
       {selectedRoomData && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md px-6 pb-12 pt-6 border-t border-slate-100 z-50 animate-in slide-in-from-bottom duration-500">
-          <div className="bg-white rounded-[40px] p-8 shadow-2xl border border-slate-50 space-y-8">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1.5">
-                 <div className="flex items-center gap-2">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl px-4 pb-10 pt-6 border-t border-slate-100 z-50 animate-in slide-in-from-bottom duration-500">
+          <div className="bg-white rounded-[40px] p-7 shadow-[0_-20px_50px_rgba(0,0,0,0.05)] border border-slate-50 space-y-7">
+            <div className="flex flex-col gap-6">
+              {/* Header Info */}
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-[#008075] rounded-full animate-pulse"></div>
-                    <span className="text-[12px] font-black text-[#008075] uppercase tracking-widest">Confirmed Selection</span>
-                 </div>
-                 <h4 className="text-[20px] font-black text-[#1A2B28]">{selectedRoomData.building}-{selectedRoomData.room_number} — {selectedRoomData.floor}</h4>
-                 <div className="flex items-center gap-2.5 mt-1">
-                    <span className="text-[12px] font-bold text-[#718096] bg-slate-50 px-3 py-1 rounded-full">{selectedRoomData.type}</span>
-                    <span className="text-[12px] font-black text-[#006E65]">{selectedRoomData.available} Beds Available</span>
-                 </div>
+                    <span className="text-[11px] font-black text-[#008075] uppercase tracking-widest">Selection Confirmed</span>
+                  </div>
+                  <h4 className="text-[24px] font-black text-[#1A2B28] leading-tight">
+                    {selectedRoomData.building}-{selectedRoomData.room_number}
+                  </h4>
+                  <p className="text-[12px] font-bold text-[#718096] uppercase tracking-wider">{selectedRoomData.floor}</p>
+                </div>
+                
+                <div className="text-right flex flex-col items-end">
+                  <span className="text-[10px] font-black text-[#ADB5BD] uppercase tracking-tighter mb-1">Monthly Rent</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-[26px] font-black text-[#1A2B28] leading-none">{selectedRoomData.price}</span>
+                    <span className="text-[12px] font-medium text-[#ADB5BD]">/mo</span>
+                  </div>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-[12px] font-black text-[#718096] uppercase tracking-tighter mb-0.5">Rent</p>
-                <p className="text-[22px] font-black text-[#1A2B28]">{selectedRoomData.price}<span className="text-xs font-medium text-[#ADB5BD]">/mo</span></p>
+
+              {/* Badges Row */}
+              <div className="flex flex-wrap gap-3 pt-1">
+                <div className="bg-[#F8FAFB] px-4 py-2 rounded-2xl border border-slate-50 flex items-center gap-2 shadow-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#718096" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-3-3.87"/><path d="M9 21v-2a4 4 0 0 1 3-3.87"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span className="text-[11px] font-black text-[#718096] uppercase">{selectedRoomData.type}</span>
+                </div>
+                <div className="bg-[#EBFBF8] px-4 py-2 rounded-2xl border border-[#006E65]/5 flex items-center gap-2 shadow-sm">
+                   <div className="w-1.5 h-1.5 bg-[#006E65] rounded-full"></div>
+                   <span className="text-[11px] font-black text-[#006E65] uppercase">{selectedRoomData.available} Vacant Beds</span>
+                </div>
               </div>
             </div>
+
             <button 
               onClick={handleContinue}
-              className="w-full bg-[#006E65] py-6 rounded-[28px] text-white font-black text-[17px] flex items-center justify-center gap-4 hover:bg-[#005A52] shadow-2xl shadow-teal-900/20 active:scale-[0.98] transition-all group"
+              className="w-full bg-[#006E65] py-5.5 rounded-[28px] text-white font-black text-[17px] flex items-center justify-center gap-4 hover:bg-[#005A52] shadow-2xl shadow-teal-900/20 active:scale-[0.98] transition-all group"
             >
               Confirm & Select Bed
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-2 transition-transform"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-2 transition-transform">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
             </button>
           </div>
         </div>

@@ -1,40 +1,46 @@
 'use server'
 
-import { createServiceRoleClient } from '../lib/supabase/service'
+import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 
 async function getAuthenticatedOwnerId() {
-  const cookieStore = await cookies()
-  const phone = cookieStore.get('mock_session_phone')?.value
+  const supabase = await createClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
   
-  if (!phone) {
-    console.warn('No phone found in cookies, using fallback for dev')
+  if (error || !user) {
+    // Check if we are in dev mode with mock session
+    const cookieStore = await cookies()
+    const phone = cookieStore.get('mock_session_phone')?.value
+    
+    if (phone) {
+      // Still allow mock lookup for transition period
+      const { data, error: lookupError } = await supabase
+        .from('owners')
+        .select('id')
+        .eq('phone', phone)
+        .single()
+        
+      if (!lookupError && data) return data.id
+    }
+    
+    // Final fallback for local development if everything fails
+    console.warn('Authentication failed, using dev fallback ID')
     return 'e3bdf815-ffc0-4a7c-aa35-fa9647fa7d4e' 
   }
 
-  const supabase = createServiceRoleClient()
-  const { data, error } = await supabase
-    .from('owners')
-    .select('id')
-    .eq('phone', phone)
-    .single()
-    
-  if (error || !data) {
-    console.warn('Owner lookup failed for phone:', phone, 'using fallback')
-    return 'e3bdf815-ffc0-4a7c-aa35-fa9647fa7d4e'
-  }
-  return data.id
+  return user.id
 }
 
 export async function getOwnerInfo() {
   const ownerId = await getAuthenticatedOwnerId()
-  if (!ownerId) return null
-  const supabase = createServiceRoleClient()
+  const supabase = await createClient()
+  
   const { data: owner } = await supabase
     .from('owners')
     .select('name, phone, properties(name)')
     .eq('id', ownerId)
     .single()
+
   return {
     name: owner?.name || "Owner",
     phone: owner?.phone || "",
@@ -44,9 +50,7 @@ export async function getOwnerInfo() {
 
 export async function getOwnerDashboardData() {
   const ownerId = await getAuthenticatedOwnerId()
-  if (!ownerId) return null
-
-  const supabase = createServiceRoleClient()
+  const supabase = await createClient()
 
   // 1. Fetch Owner and Active Tenants first
   const [ownerRes, tenantsListRes] = await Promise.all([
@@ -97,7 +101,9 @@ export async function getOwnerDashboardData() {
   if (roomsRes.data) {
     roomsRes.data.forEach(room => {
       totalBeds += room.capacity
-      occupiedBeds += room.tenant_assignments?.filter(ta => ta.status === 'active').length || 0
+      occupiedBeds += room.tenant_assignments?.filter(ta => 
+        String(ta.status).toUpperCase() === 'ACTIVE'
+      ).length || 0
     })
   }
 
@@ -123,9 +129,7 @@ export async function getOwnerDashboardData() {
 
 export async function createTenant(tenantData) {
   const ownerId = await getAuthenticatedOwnerId()
-  if (!ownerId) return { success: false, error: "Unauthorized" }
-
-  const supabase = createServiceRoleClient()
+  const supabase = await createClient()
   
   // 1. Create the tenant record
   const { roomId, bedId, ...profileData } = tenantData
@@ -154,13 +158,16 @@ export async function createTenant(tenantData) {
         tenant_id: tenant.id,
         room_id: roomId,
         bed_index: bedId, // Using bedId as a label or index
-        status: 'ACTIVE',
+        status: 'active',
         assigned_at: new Date().toISOString()
       }])
 
     if (assignmentError) {
       console.error('Error creating assignment:', assignmentError)
-      // We don't fail the whole thing, but maybe log it
+      return { 
+        success: false, 
+        error: `Tenant created but room assignment failed: ${assignmentError.message}.` 
+      }
     }
   }
 
@@ -169,13 +176,17 @@ export async function createTenant(tenantData) {
 
 export async function getTenants() {
   const ownerId = await getAuthenticatedOwnerId()
-  if (!ownerId) return []
-
-  const supabase = createServiceRoleClient()
+  const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('tenants')
-    .select('*, rooms(room_number)')
+    .select(`
+      *,
+      tenant_assignments(
+        status,
+        rooms(room_number)
+      )
+    `)
     .eq('owner_id', ownerId)
     .order('created_at', { ascending: false })
 
@@ -185,25 +196,29 @@ export async function getTenants() {
   }
 
   // Flatten and normalize data for the UI
-  const formattedData = data?.map(tenant => ({
-    ...tenant,
-    room: tenant.rooms?.room_number || "Unassigned",
-    initials: tenant.name?.substring(0, 1).toUpperCase() || "?",
-    rent: tenant.rent ? `₹${Number(tenant.rent).toLocaleString('en-IN')}` : "₹0",
-    deposit: tenant.deposit ? `₹${Number(tenant.deposit).toLocaleString('en-IN')}` : "₹0",
-    moveIn: tenant.move_in_date ? new Date(tenant.move_in_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : "N/A",
-    period: tenant.agreement_period || "N/A",
-    govId: tenant.id_type || "N/A"
-  }))
+  const formattedData = data?.map(tenant => {
+    // Get the active assignment
+    const activeAssignment = tenant.tenant_assignments?.find(ta => ta.status === 'ACTIVE') || tenant.tenant_assignments?.[0];
+    const roomNumber = activeAssignment?.rooms?.room_number;
+
+    return {
+      ...tenant,
+      room: roomNumber ? `Room ${roomNumber}` : "Unassigned",
+      initials: tenant.name?.substring(0, 1).toUpperCase() || "?",
+      rent: tenant.rent ? `₹${Number(tenant.rent).toLocaleString('en-IN')}` : "₹0",
+      deposit: tenant.deposit ? `₹${Number(tenant.deposit).toLocaleString('en-IN')}` : "₹0",
+      moveIn: tenant.move_in_date ? new Date(tenant.move_in_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : "N/A",
+      period: tenant.agreement_period || "N/A",
+      govId: tenant.id_type || "N/A"
+    }
+  })
 
   return formattedData || []
 }
 
 export async function removeTenant(tenantId) {
   const ownerId = await getAuthenticatedOwnerId()
-  if (!ownerId) return { success: false, error: "Unauthorized" }
-
-  const supabase = createServiceRoleClient()
+  const supabase = await createClient()
   
   const { error } = await supabase
     .from('tenants')
@@ -221,9 +236,7 @@ export async function removeTenant(tenantId) {
 
 export async function createRoom(roomData) {
   const ownerId = await getAuthenticatedOwnerId()
-  if (!ownerId) return { success: false, error: "Unauthorized" }
-
-  const supabase = createServiceRoleClient()
+  const supabase = await createClient()
   
   // Fetch the owner's first property ID
   const { data: owner } = await supabase
@@ -256,9 +269,7 @@ export async function createRoom(roomData) {
 
 export async function getRooms() {
   const ownerId = await getAuthenticatedOwnerId()
-  if (!ownerId) return []
-
-  const supabase = createServiceRoleClient()
+  const supabase = await createClient()
   
   // 1. Fetch Owner's property first
   const { data: owner } = await supabase
@@ -273,7 +284,7 @@ export async function getRooms() {
   // 2. Fetch all rooms for this property
   const { data, error } = await supabase
     .from('rooms')
-    .select('*, tenant_assignments(id, status)')
+    .select('*, tenant_assignments(id, status, bed_index)')
     .eq('property_id', propertyId)
     .order('room_number', { ascending: true })
 
@@ -284,7 +295,9 @@ export async function getRooms() {
 
   // 3. Format data for UI
   const formattedRooms = data.map(room => {
-    const activeTenants = room.tenant_assignments?.filter(ta => ta.status === 'ACTIVE').length || 0
+    const activeTenants = room.tenant_assignments?.filter(ta => 
+      String(ta.status).toUpperCase() === 'ACTIVE'
+    ).length || 0
     const available = room.capacity - activeTenants
     
     let status = "VACANT"
@@ -300,9 +313,12 @@ export async function getRooms() {
       floor: room.floor,
       status,
       price: `₹${Number(room.rent_per_bed).toLocaleString('en-IN')}`,
+      rawPrice: room.rent_per_bed,
       type: `${room.sharing_type} - ${room.room_type}`,
+      sharing_type: room.sharing_type,
       beds: room.capacity,
       available,
+      assignments: room.tenant_assignments || [],
       amenities: room.amenities || [],
       desc: room.description || `Spacious ${room.sharing_type} room located in Building ${room.building_number || 'Main'} on the ${room.floor}.`
     }
@@ -313,9 +329,7 @@ export async function getRooms() {
 
 export async function removeRoom(roomId) {
   const ownerId = await getAuthenticatedOwnerId()
-  if (!ownerId) return { success: false, error: "Unauthorized" }
-
-  const supabase = createServiceRoleClient()
+  const supabase = await createClient()
   
   const { error } = await supabase
     .from('rooms')
@@ -328,4 +342,27 @@ export async function removeRoom(roomId) {
   }
 
   return { success: true }
+}
+
+export async function updateRoom(roomId, roomData) {
+  const ownerId = await getAuthenticatedOwnerId()
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase
+    .from('rooms')
+    .update({
+      ...roomData,
+      rent_per_bed: roomData.price, // Map UI price to DB column
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', roomId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating room:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true, data }
 }

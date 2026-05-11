@@ -68,6 +68,19 @@ export default function TenantsPage() {
   if (view === "detail" && selectedTenant) {
      return (
         <div className="min-h-screen bg-white animate-in slide-in-from-right duration-500 font-body pb-10">
+           {/* Header */}
+           <header className="bg-white/80 backdrop-blur-md px-6 py-5 flex items-center gap-4 sticky top-0 z-50 border-b border-slate-50">
+             <button 
+               onClick={() => setView('list')} 
+               className="p-2 -ml-2 text-[#00685F] bg-[#EBFBF8] rounded-xl active:scale-90 transition-transform"
+             >
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                 <line x1="19" y1="12" x2="5" y2="12" />
+                 <polyline points="12 19 5 12 12 5" />
+               </svg>
+             </button>
+             <h1 className="text-lg font-black text-[#1A2B28] tracking-tight">Resident Details</h1>
+           </header>
            <main className="px-5 py-6 space-y-6">
               {/* Hero Card */}
               <div className="bg-white rounded-[32px] p-8 flex flex-col items-center text-center shadow-[0_4px_25px_rgba(0,0,0,0.03)] border border-slate-50 relative overflow-hidden">
@@ -251,6 +264,19 @@ export default function TenantsPage() {
   if (view === "list") {
     return (
        <div className="min-h-screen bg-[#F8FAFB] animate-in fade-in duration-500 font-body pb-32">
+          {/* Header */}
+          <header className="bg-white/80 backdrop-blur-md px-6 py-5 flex items-center gap-4 sticky top-0 z-50 border-b border-slate-50">
+            <button 
+              onClick={() => setView('menu')} 
+              className="p-2 -ml-2 text-[#00685F] bg-[#EBFBF8] rounded-xl active:scale-90 transition-transform"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+            </button>
+            <h1 className="text-lg font-black text-[#1A2B28] tracking-tight">Active Residents</h1>
+          </header>
           <main className="px-6 py-3 space-y-5">
 
 
@@ -335,13 +361,14 @@ export default function TenantsPage() {
   return (
     <div className="min-h-screen bg-white font-body pb-12">
 
-      <main className="px-6 pt-8 space-y-8">
+
+      <main className="px-6 pt-5 space-y-8">
         <div className="space-y-2 text-left">
-          <h2 className="text-3xl font-black text-[#1A2B28]">Tenant Directory</h2>
+          <h2 className="text-3xl font-black text-[#1A2B28]">Manage Tenants</h2>
           <p className="text-sm font-medium text-[#718096]">Control and monitor your residents profiles</p>
         </div>
 
-        <div className="grid gap-5 mt-10">
+        <div className="grid gap-5 ">
           <button 
             onClick={() => router.push('/tenants/add')}
             className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"

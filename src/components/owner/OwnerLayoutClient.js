@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import BottomNav from "@/components/BottomNav"
 
@@ -10,7 +10,27 @@ export default function OwnerLayoutClient({ children, ownerInfo }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  // Dynamic Title Logic
+  const [showExitModal, setShowExitModal] = useState(false);
+
+  // Responsive Navigation Guard
+  useEffect(() => {
+    const isDashboard = pathname === '/dashboard';
+
+    // Only Dashboard needs an active 'shield' to prevent accidental app exit
+    if (isDashboard) {
+      window.history.pushState({ exitGuard: true }, "", window.location.pathname);
+      
+      const handlePopState = (event) => {
+        // Re-shield and show modal
+        window.history.pushState({ exitGuard: true }, "", window.location.pathname);
+        setShowExitModal(true);
+      };
+
+      window.addEventListener('popstate', handlePopState);
+      return () => window.removeEventListener('popstate', handlePopState);
+    }
+  }, [pathname, router]);
+
   const getPageTitle = () => {
     const view = searchParams.get('view');
 
@@ -44,6 +64,7 @@ export default function OwnerLayoutClient({ children, ownerInfo }) {
   };
 
   const isDashboard = pathname === '/dashboard';
+  const shouldHideHeader = pathname === '/tenants/add/select-room' || pathname === '/tenants/add/select-bed';
 
   return (
     <div className="min-h-screen bg-[#F8FAFB] pb-24 font-sans">
@@ -109,39 +130,82 @@ export default function OwnerLayoutClient({ children, ownerInfo }) {
       )}
 
       {/* Header */}
-      <header className="bg-white px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          {isDashboard ? (
-            <div 
-              onClick={() => setIsSidebarOpen(true)}
-              className="w-9 h-9 bg-[#00685F] rounded-full flex items-center justify-center text-white text-[12px] font-bold shadow-md cursor-pointer border-2 border-white"
-            >
-              {ownerInfo.name.substring(0, 2).toUpperCase()}
-            </div>
-          ) : (
-            <button onClick={() => router.back()} className="p-1 text-[#00685F]">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-            </button>
-          )}
-          <h1 className={`${isDashboard ? 'text-[16px]' : 'text-[20px]'} font-bold text-[#1A2B28]`}>{getPageTitle()}</h1>
-        </div>
-        
-        {isDashboard && (
-          <div 
-            onClick={() => router.push('/notifications')}
-            className="relative cursor-pointer"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A2B28" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></div>
+      {!shouldHideHeader && (
+        <header className="bg-white px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
+          <div className="flex items-center gap-3">
+            {isDashboard ? (
+              <div 
+                onClick={() => setIsSidebarOpen(true)}
+                className="w-9 h-9 bg-[#00685F] rounded-full flex items-center justify-center text-white text-[12px] font-bold shadow-md cursor-pointer border-2 border-white"
+              >
+                {ownerInfo.name.substring(0, 2).toUpperCase()}
+              </div>
+            ) : (
+              <button 
+                onClick={() => {
+                  const mainPages = ['/tenants', '/rooms', '/rent', '/notices', '/settings'];
+                  if (mainPages.includes(pathname)) {
+                    router.push('/dashboard');
+                  } else {
+                    router.back();
+                  }
+                }} 
+                className="p-1 text-[#00685F]"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              </button>
+            )}
+            <h1 className={`${isDashboard ? 'text-[16px]' : 'text-[20px]'} font-bold text-[#1A2B28]`}>{getPageTitle()}</h1>
           </div>
-        )}
-      </header>
+          
+          {isDashboard && (
+            <div 
+              onClick={() => router.push('/notifications')}
+              className="relative cursor-pointer"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A2B28" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></div>
+            </div>
+          )}
+        </header>
+      )}
 
       <main>
         {children}
       </main>
 
-      <BottomNav />
+      {!shouldHideHeader && <BottomNav />}
+
+      {/* Global Exit Confirmation Modal */}
+      {showExitModal && (
+        <div className="fixed inset-0 z-200 flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-[#1A2B28]/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowExitModal(false)}></div>
+          <div className="bg-white w-full max-w-sm rounded-[32px] p-8 relative z-10 shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-400">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </div>
+            <h3 className="text-2xl font-black text-[#1A2B28] text-center mb-2 font-heading">Quit App?</h3>
+            <p className="text-[#718096] text-center font-medium mb-8">Are you sure you want to exit the Rent Management application?</p>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setShowExitModal(false)}
+                className="flex-1 py-4 rounded-[20px] bg-[#F1F4F8] text-[#1A2B28] font-black hover:bg-slate-200 transition-colors"
+              >
+                Stay
+              </button>
+              <button 
+                onClick={() => {
+                  window.close();
+                  window.location.href = "about:blank";
+                }}
+                className="flex-1 py-4 rounded-[20px] bg-red-500 text-white font-black shadow-lg shadow-red-500/20 hover:bg-red-600 transition-colors"
+              >
+                Exit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

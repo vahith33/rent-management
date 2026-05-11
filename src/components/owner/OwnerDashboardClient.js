@@ -1,16 +1,13 @@
 "use client";
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
 
 export default function OwnerDashboardClient({ initialData }) {
   const router = useRouter();
   const { owner, stats, recentRent } = initialData;
 
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
   const [rentFilter, setRentFilter] = useState("UNPAID"); 
 
   const handleAction = (label) => {
@@ -20,6 +17,7 @@ export default function OwnerDashboardClient({ initialData }) {
       router.push('/notices');
     }
   };
+
   return (
     <div className="min-h-screen pb-24 font-sans">
       <main className="px-6 pt-5 space-y-8">

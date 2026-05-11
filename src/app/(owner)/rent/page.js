@@ -209,20 +209,15 @@ export default function RentManagementPage() {
   // ==========================================
   return (
     <div className="min-h-screen bg-white font-body pb-12">
-      <header className="px-4 py-4 flex items-center gap-6 sticky top-0 bg-white z-50 border-b border-slate-50">
-        <button onClick={() => router.push('/dashboard')} className="text-[#00685F] active:scale-90 transition-transform">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        </button>
-        <h1 className="text-xl font-black text-[#1A2B28]">Manage Rent</h1>
-      </header>
 
-      <main className="px-6 pt-8 space-y-8">
+
+      <main className="px-6 pt-5 space-y-8">
         <div className="space-y-2 text-left">
-          <h2 className="text-3xl font-black text-[#1A2B28]">Financial Console</h2>
-          <p className="text-sm font-medium text-[#718096]">Track collections, identify late payments, and log income</p>
+          <h2 className="text-3xl font-black text-[#1A2B28]">Manage Rent</h2>
+          <p className="text-sm font-medium text-[#718096]">Track Rent, identify late payments, and log income</p>
         </div>
 
-        <div className="grid gap-5 mt-10">
+        <div className="grid gap-5 ">
           <button 
             onClick={() => router.push('?view=unpaid')}
             className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
@@ -253,12 +248,12 @@ export default function RentManagementPage() {
             onClick={() => router.push('?view=analytics')}
             className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
           >
-            <div className={`bg-amber-500 text-white p-4.5 rounded-2xl shadow-lg shadow-amber-900/10`}>
+            <div className={`bg-[#648dcb] text-white p-4.5 rounded-2xl shadow-lg shadow-slate-900/10`}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             </div>
             <div className="flex flex-col items-start text-left">
               <span className="text-xl font-black text-[#1A2B28]">Rent Analytics</span>
-              <span className="text-[12px] font-bold text-amber-500 mt-1">Income Insights</span>
+              <span className="text-[12px] font-bold text-[#718096] mt-1">Income Insights</span>
             </div>
           </button>
         </div>
