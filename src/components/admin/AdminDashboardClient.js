@@ -5,7 +5,7 @@ import ViewAllPGs from './ViewAllPGs'
 import AddNewPG from './AddNewPG'
 import DeletePG from './DeletePG'
 
-export default function AdminDashboardClient({ initialData, adminPhone }) {
+export default function AdminDashboardClient({ initialData, adminEmail }) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -38,7 +38,7 @@ export default function AdminDashboardClient({ initialData, adminPhone }) {
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center z-10 sticky top-0">
         <div className="font-black text-[#1A2B28] text-xl">StayEase Admin</div>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-bold text-[#718096]">{adminPhone}</span>
+          <span className="text-sm font-bold text-[#718096]">{adminEmail}</span>
           <button 
             onClick={handleLogout}
             className="text-sm font-bold text-red-600 hover:bg-red-50 px-4 py-2 rounded-full transition-colors"

@@ -3,40 +3,52 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { checkUserRegistration } from "@/actions/auth/checkUser";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [role, setRole] = useState("owner");
-  const [mobileNumber, setMobileNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleMobileContinue = async () => {
+  const handleLoginContinue = async () => {
     setError("");
-    const cleanedNumber = mobileNumber.replace(/\D/g, "");
-    if (cleanedNumber.length !== 10) {
-      setError("Please enter a valid 10-digit number");
+    if (!email || !email.includes("@")) {
+      setError("Please enter a valid email address");
       return;
     }
 
     setIsLoading(true);
-    const supabase = createClient();
-    
-    // Standard E.164 format (Supabase will pass this to your new webhook)
-    const formattedPhone = `+91${cleanedNumber}`;
 
-    const { error: authError } = await supabase.auth.signInWithOtp({
-      phone: formattedPhone,
-    });
+    try {
+      // 1. Check if the user is registered in our system
+      const registration = await checkUserRegistration(email);
+      
+      if (!registration.registered) {
+        setError("This email is not registered. Please contact your property administrator.");
+        setIsLoading(false);
+        return;
+      }
 
-    setIsLoading(false);
+      // 2. If registered, send the OTP
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-    if (authError) {
-      setError(authError.message);
-      return;
+      if (authError) {
+        setError(authError.message);
+        setIsLoading(false);
+      } else {
+        router.push(`/otp-verify?email=${encodeURIComponent(email)}`);
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
     }
-
-    router.push(`/otp-verify?role=${role}&phone=${cleanedNumber}`);
   };
 
   return (
@@ -55,7 +67,7 @@ export default function LoginPage() {
       {/* Login Card */}
       <div className="w-full max-w-[400px] -mt-10 bg-white rounded-[32px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-50 flex flex-col gap-6 z-10 mx-6 hover:shadow-[0_30px_60px_rgba(0,0,0,0.08)] transition-all duration-700 animate-in fade-in slide-in-from-bottom-8">
         <h2 className="text-[20px] font-bold leading-tight text-[#1A2B28] font-heading">
-          Enter your mobile<br />number
+          Welcome back!<br />Enter your email
         </h2>
 
         {error && (
@@ -64,40 +76,30 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Owner/Tenant Toggle */}
-        <div className="flex bg-[#F1F4F8] p-1.5 rounded-2xl relative">
-          <div 
-            className={`absolute inset-y-1.5 w-[calc(50%-6px)] bg-white rounded-xl shadow-sm transition-all duration-300 ease-out z-0 ${role === 'tenant' ? 'translate-x-[calc(100%+6px)]' : 'translate-x-0'}`}
-          ></div>
-          <button onClick={() => setRole("owner")} className={`flex-1 py-3 text-sm font-bold z-10 transition-colors ${role === "owner" ? "text-[#008075]" : "text-slate-400"}`}>Owner</button>
-          <button onClick={() => setRole("tenant")} className={`flex-1 py-3 text-sm font-bold z-10 transition-colors ${role === "tenant" ? "text-[#008075]" : "text-slate-400"}`}>Tenant</button>
-        </div>
-
-        {/* Mobile Input */}
+        {/* Email Input */}
         <div className="space-y-2 mt-2">
-          <label className="text-[12px] font-bold uppercase tracking-widest text-[#ADB5BD] pl-1 font-body">Mobile Number</label>
+          <label className="text-[12px] font-bold uppercase tracking-widest text-[#ADB5BD] pl-1 font-body">Email Address</label>
           <div className="flex gap-1.5">
             <div className="flex items-center gap-2 bg-[#F1F4F8] px-4 py-4 rounded-2xl shrink-0">
-              <div className="w-6 h-4 overflow-hidden rounded-sm">
-                <svg width="100%" height="100%" viewBox="0 0 640 480"><rect width="640" height="480" fill="#f93"/><rect width="640" height="160" y="160" fill="#fff"/><rect width="640" height="160" y="320" fill="#128807"/><circle cx="320" cy="240" r="40" fill="#000080"/></svg>
-              </div>
-              <span className="font-bold text-[#1A2B28]">+91</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#008075" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
             </div>
             <input
-              type="tel"
-              inputMode="numeric"
-              placeholder="93636 58160"
-              value={mobileNumber}
+              type="email"
+              placeholder="name@example.com"
+              value={email}
               disabled={isLoading}
-              onChange={(e) => setMobileNumber(e.target.value.replace(/[^\d\s]/g, ""))}
-              onKeyDown={(e) => e.key === "Enter" && !isLoading && handleMobileContinue()}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !isLoading && handleLoginContinue()}
               className="flex-1 bg-[#F1F4F8] px-5 py-4 rounded-2xl text-[14px] font-medium text-[#1A2B28] outline-none focus:bg-white focus:ring-2 focus:ring-[#008075] transition-all font-body disabled:opacity-50"
             />
           </div>
       </div>
 
         <button 
-          onClick={handleMobileContinue} 
+          onClick={handleLoginContinue} 
           disabled={isLoading}
           className="w-full bg-[#008075] py-4.5 rounded-2xl text-white font-bold flex items-center justify-center gap-2 group hover:bg-[#006E65] transition-all active:scale-[0.98] mt-2 shadow-lg shadow-[#008075]/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -105,7 +107,7 @@ export default function LoginPage() {
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           ) : (
             <>
-              Send OTP <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="transition-transform group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              Continue <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="transition-transform group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </>
           )}
         </button>

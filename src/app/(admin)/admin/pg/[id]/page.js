@@ -11,9 +11,9 @@ export default async function ManagePGPage({ params }) {
   const { data: { session } } = await supabase.auth.getSession()
   
   const cookieStore = await cookies()
-  const mockPhone = cookieStore.get('mock_session_phone')?.value
+  const mockEmail = cookieStore.get('mock_session_email')?.value
 
-  if (!session && !mockPhone) {
+  if (!session && !mockEmail) {
     redirect('/login')
   }
 

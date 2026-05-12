@@ -8,23 +8,16 @@ export default async function AdminLayout({ children }) {
   
   // Get mock cookie if it exists
   const cookieStore = await cookies()
-  const mockPhone = cookieStore.get('mock_session_phone')?.value
+  const mockEmail = cookieStore.get('mock_session_email')?.value
 
-  if (!session && !mockPhone) {
+  if (!session && !mockEmail) {
     redirect('/login')
   }
 
-  const phone = session?.user?.phone || mockPhone
-  let digits = phone ? String(phone).trim() : ''
-  if (digits.startsWith('+91')) {
-    digits = digits.slice(3)
-  } else if (digits.startsWith('91')) {
-     digits = digits.slice(2)
-  }
+  const email = session?.user?.email || mockEmail
+  const adminEmail = process.env.ADMIN_EMAIL
 
-  const adminPhone = process.env.ADMIN_PHONE ? String(process.env.ADMIN_PHONE).trim() : ''
-
-  if (digits !== adminPhone) {
+  if (email !== adminEmail) {
     redirect('/login')
   }
 

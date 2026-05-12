@@ -195,7 +195,7 @@ function RoomsContent() {
 
            <main className="px-6 py-6 space-y-5">
               <div className="space-y-2">
-                 <h2 className="text-[22px] font-black text-[#1A2B28]">Available Inventory</h2>
+                 <h2 className="text-[22px] font-black text-[#1A2B28]">Available Rooms</h2>
                  <p className="text-[14px] font-medium text-[#718096]">Manage and monitor your property availability</p>
               </div>
 
@@ -312,7 +312,7 @@ function RoomsContent() {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12H3"/><path d="M9 6l-6 6 6 6"/><path d="M15 18l6-6-6-6"/></svg>
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-xl font-black text-[#1A2B28]">Inventory List</span>
+              <span className="text-xl font-black text-[#1A2B28]">Rooms List</span>
               <span className="text-[12px] font-bold text-[#718096] mt-1">Management</span>
             </div>
           </button>

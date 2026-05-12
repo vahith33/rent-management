@@ -56,7 +56,12 @@ export default function OwnerLayoutClient({ children, ownerInfo }) {
       return 'Property & Rooms';
     }
     
-    if (pathname.includes('/rent')) return 'Financial Console';
+    if (pathname.includes('/rent')) {
+      if (view === 'unpaid') return 'Outstanding Rent';
+      if (view === 'paid') return 'Payment History';
+      if (view === 'analytics') return 'Financial Analytics';
+      return 'Rent Management';
+    }
     if (pathname.includes('/notices')) return 'Broadcast Notice';
     if (pathname.includes('/notifications')) return 'Notifications';
     

@@ -2,11 +2,12 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createTenant } from '@/actions/owner';
+import { createTenant, updateTenant } from '@/actions/owner';
 
 function AddTenantForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const editId = searchParams.get('id');
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -24,6 +25,7 @@ function AddTenantForm() {
     id_number: searchParams.get('id_number') || '',
     emergency_contact_name: searchParams.get('emergency_contact_name') || '',
     emergency_contact_phone: searchParams.get('emergency_contact_phone') || '',
+    due_day: searchParams.get('due_day') || '1',
     roomId: searchParams.get('selectedRoomId') || '',
     bedId: searchParams.get('selectedBedId') || ''
   });
@@ -33,19 +35,21 @@ function AddTenantForm() {
 
   useEffect(() => {
     setMounted(true);
-    // Load from sessionStorage on mount if available and no search params are set
-    const saved = sessionStorage.getItem('tenant_form_draft');
-    if (saved && !searchParams.toString()) {
-      setFormData(JSON.parse(saved));
+    // Load from sessionStorage on mount if available and no search params are set (but not in edit mode)
+    if (!editId) {
+      const saved = sessionStorage.getItem('tenant_form_draft');
+      if (saved && !searchParams.toString()) {
+        setFormData(JSON.parse(saved));
+      }
     }
-  }, []);
+  }, [editId]);
 
-  // Save to sessionStorage whenever formData changes
+  // Save to sessionStorage whenever formData changes (only if not editing)
   useEffect(() => {
-    if (mounted) {
+    if (mounted && !editId) {
       sessionStorage.setItem('tenant_form_draft', JSON.stringify(formData));
     }
-  }, [formData, mounted]);
+  }, [formData, mounted, editId]);
 
   // Sync searchParams into formData when they change (returning from selection)
   useEffect(() => {
@@ -69,8 +73,8 @@ function AddTenantForm() {
         if (room) {
           setFormData(prev => ({ 
             ...prev, 
-            rent: room.rawPrice || prev.rent,
-            agreement_period: room.sharing_type ? 'Monthly' : prev.agreement_period
+            rent: prev.rent || room.rawPrice, // Don't override if already set (especially in edit mode)
+            agreement_period: prev.agreement_period || (room.sharing_type ? 'Monthly' : '11 Months')
           }));
         }
       };
@@ -102,13 +106,15 @@ function AddTenantForm() {
     setError(null);
     
     try {
-      const result = await createTenant(formData);
+      const result = editId 
+        ? await updateTenant(editId, formData)
+        : await createTenant(formData);
       
       if (result.success) {
-        sessionStorage.removeItem('tenant_form_draft');
+        if (!editId) sessionStorage.removeItem('tenant_form_draft');
         setShowSuccess(true);
         setTimeout(() => {
-          router.push('/tenants');
+          router.push(editId ? `/tenants?view=detail&id=${editId}` : '/tenants');
           router.refresh();
         }, 1500);
       } else {
@@ -156,17 +162,17 @@ function AddTenantForm() {
           </div>
         )}
 
-      <main className="px-4 space-y-4 pt-6 font-body">
+      <main className="px-4 space-y-4  font-body">
         {/* PERSONAL DETAILS SECTION */}
-        <section className="bg-[#F8FAFB] rounded-[32px] p-5 space-y-5 border border-slate-50">
+        <section className="bg-[#F8FAFB] rounded-[28px] p-5 space-y-4 border border-slate-100/50">
           <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-[#00685F] rounded-full"></div>
+            <div className="w-1 h-5 bg-[#00685F] rounded-full"></div>
             <h2 className="text-[16px] font-black text-[#1A2B28]">Personal Details</h2>
           </div>
           
-          <div className="space-y-2">
-            <label className="text-[13px] font-black text-[#1A2B28] pb-1 ml-1 flex items-center gap-1">
-              Full Name <span className="text-red-500">*</span>
+          <div className="space-y-1.5">
+            <label className="text-[12px] font-bold text-[#1A2B28] ml-1">
+              Full Name <span className="text-red-500 font-black">*</span>
             </label>
             <input 
               type="text" 
@@ -176,17 +182,17 @@ function AddTenantForm() {
                 setFormData({...formData, name: e.target.value});
                 if (errors.name) setErrors({...errors, name: false});
               }}
-              className={`w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] placeholder-[#ADB5BD] outline-none ring-2 transition-all ${
-                errors.name ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent'
+              className={`w-full bg-[#EEF2F8] border-none rounded-xl p-4 text-[#1A2B28] placeholder-[#ADB5BD] outline-none ring-2 transition-all ${
+                errors.name ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent focus:ring-[#008075]/20'
               }`}
             />
           </div>
 
-          <div className="flex gap-4">
-             <div className="flex-1 space-y-2">
-                 <label className="text-[13px] font-black text-[#1A2B28] pb-1 ml-1 flex items-center gap-1">
-                   Phone <span className="text-red-500">*</span>
-                 </label>
+          <div className="flex gap-3">
+             <div className="flex-1 space-y-1.5">
+                  <label className="text-[12px] font-bold text-[#1A2B28] ml-1">
+                    Phone <span className="text-red-500 font-black">*</span>
+                  </label>
                 <input 
                   type="tel" 
                   placeholder="+91 90000 00000" 
@@ -195,15 +201,15 @@ function AddTenantForm() {
                     setFormData({...formData, phone: e.target.value});
                     if (errors.phone) setErrors({...errors, phone: false});
                   }}
-                  className={`w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none ring-2 transition-all ${
-                    errors.phone ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent'
+                  className={`w-full bg-[#EEF2F8] border-none rounded-xl p-4 text-[#1A2B28] outline-none ring-2 transition-all ${
+                    errors.phone ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent focus:ring-[#008075]/20'
                   }`} 
                 />
              </div>
-             <div className="flex-1 space-y-2">
-                 <label className="text-[13px] font-black text-[#1A2B28] pb-1 ml-1 flex items-center gap-1">
-                   Gender <span className="text-red-500">*</span>
-                 </label>
+             <div className="flex-1 space-y-1.5">
+                  <label className="text-[12px] font-bold text-[#1A2B28] ml-1">
+                    Gender <span className="text-red-500 font-black">*</span>
+                  </label>
                 <div className="relative">
                   <select 
                     value={formData.gender}
@@ -211,8 +217,8 @@ function AddTenantForm() {
                       setFormData({...formData, gender: e.target.value});
                       if (errors.gender) setErrors({...errors, gender: false});
                     }}
-                    className={`w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none appearance-none font-medium ring-2 transition-all ${
-                      errors.gender ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent'
+                    className={`w-full bg-[#EEF2F8] border-none rounded-xl p-4 text-[#1A2B28] outline-none appearance-none font-bold ring-2 transition-all ${
+                      errors.gender ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent focus:ring-[#008075]/20'
                     }`}
                   >
                       <option>Male</option>
@@ -220,33 +226,75 @@ function AddTenantForm() {
                       <option>Other</option>
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#718096]">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                 </div>
              </div>
           </div>
         </section>
 
-        {/* FINANCIAL & STAY DETAILS */}
-        <section className="bg-[#F8FAFB] rounded-[32px] p-5 space-y-5 border border-slate-50">
+        {/* ROOM ASSIGNMENT SECTION */}
+        <section className="bg-[#F8FAFB] rounded-[28px] p-5 space-y-4 border border-slate-100/50">
           <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-[#00685F] rounded-full"></div>
+            <div className="w-1 h-5 bg-[#00685F] rounded-full"></div>
+            <h2 className="text-[16px] font-black text-[#1A2B28]">Room Assignment</h2>
+          </div>
+          
+          <div className="space-y-1.5">
+             <label className="text-[12px] font-bold text-[#1A2B28] ml-1">
+               Allocation Status <span className="text-red-500 font-black">*</span>
+             </label>
+             <button 
+               onClick={navigateToSelection}
+               className={`w-full p-4 rounded-xl flex items-center justify-between transition-all group active:scale-[0.98] ring-2 ${
+                 errors.roomId ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent'
+               } ${
+                 formData.roomId && !errors.roomId ? 'bg-[#EBFBF8] ring-2 ring-[#00685F]/10 shadow-sm' : 'bg-[#EEF2F8]'
+               }`}
+             >
+                <div className="flex items-center gap-4">
+                   <div className={`p-2.5 rounded-xl transition-all ${
+                     formData.roomId ? 'bg-[#00685F] text-white' : 'bg-white/50 text-[#00685F]'
+                   }`}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/>
+                      </svg>
+                   </div>
+                   <div className="flex flex-col text-left">
+                      <span className="text-[14px] font-black text-[#1A2B28] leading-tight">
+                        {formData.bedId ? `Bed ${formData.bedId.split('-').pop()}` : formData.roomId ? `Suite Selected` : 'Click to Allocate'}
+                      </span>
+                      {formData.roomId && (
+                        <span className="text-[9px] font-bold text-[#008075] uppercase tracking-widest mt-0.5">
+                          Allocation Secured
+                        </span>
+                      )}
+                   </div>
+                </div>
+                <div className={`transition-all ${formData.roomId ? 'text-[#00685F]' : 'text-[#ADB5BD]'} group-hover:translate-x-1`}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+             </button>
+          </div>
+        </section>
+
+        {/* FINANCIAL & STAY DETAILS */}
+        <section className="bg-[#F8FAFB] rounded-[28px] p-5 space-y-4 border border-slate-100/50">
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-5 bg-[#00685F] rounded-full"></div>
             <h2 className="text-[16px] font-black text-[#1A2B28]">Financial & Stay</h2>
           </div>
           
-          <div className="flex gap-4">
-             <div className="flex-1 space-y-2">
-                 <div className="flex items-center justify-between px-1">
-                    <label className="text-[13px] font-black text-[#1A2B28] pb-1 flex items-center gap-1">
-                      Monthly Rent <span className="text-red-500">*</span>
+          <div className="flex gap-3">
+             <div className="flex-1 space-y-1.5">
+                  <div className="flex items-center justify-between px-1">
+                    <label className="text-[12px] font-bold text-[#1A2B28]">
+                      Rent <span className="text-red-500 font-black">*</span>
                     </label>
                     {formData.roomId && (
-                       <div className="flex items-center gap-1.5 bg-[#EBFBF8] px-2 py-0.5 rounded-full border border-[#00685F]/10">
-                          <div className="w-1.5 h-1.5 bg-[#00685F] rounded-full animate-pulse"></div>
-                          <span className="text-[9px] font-black text-[#00685F] uppercase tracking-tight">Auto-Filled</span>
-                       </div>
+                       <span className="text-[9px] font-bold text-[#008075] uppercase">Auto</span>
                     )}
-                 </div>
+                  </div>
                 <input 
                   type="number" 
                   placeholder="₹0.00" 
@@ -255,17 +303,17 @@ function AddTenantForm() {
                     setFormData({...formData, rent: e.target.value});
                     if (errors.rent) setErrors({...errors, rent: false});
                   }}
-                  className={`w-full border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none transition-all ring-2 ${
-                    errors.rent ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent'
+                  className={`w-full border-none rounded-xl p-4 text-[#1A2B28] outline-none transition-all ring-2 ${
+                    errors.rent ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent focus:ring-[#008075]/20'
                   } ${
-                    formData.roomId && !errors.rent ? 'bg-[#EBFBF8] ring-2 ring-[#00685F]/5 shadow-sm' : 'bg-[#EEF2F8]'
+                    formData.roomId && !errors.rent ? 'bg-[#EBFBF8] ring-2 ring-[#00685F]/5' : 'bg-[#EEF2F8]'
                   }`} 
                 />
              </div>
-             <div className="flex-1 space-y-2">
-                 <label className="text-[13px] font-black text-[#1A2B28] pb-1 ml-1 flex items-center gap-1">
-                   Security Deposit <span className="text-red-500">*</span>
-                 </label>
+             <div className="flex-1 space-y-1.5">
+                  <label className="text-[12px] font-bold text-[#1A2B28] ml-1">
+                    Deposit <span className="text-red-500 font-black">*</span>
+                  </label>
                 <input 
                   type="number" 
                   placeholder="₹0.00" 
@@ -274,18 +322,18 @@ function AddTenantForm() {
                     setFormData({...formData, deposit: e.target.value});
                     if (errors.deposit) setErrors({...errors, deposit: false});
                   }}
-                  className={`w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none ring-2 transition-all ${
-                    errors.deposit ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent'
+                  className={`w-full bg-[#EEF2F8] border-none rounded-xl p-4 text-[#1A2B28] outline-none ring-2 transition-all ${
+                    errors.deposit ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent focus:ring-[#008075]/20'
                   }`} 
                 />
              </div>
           </div>
 
-          <div className="flex gap-4">
-             <div className="flex-1 space-y-2">
-                 <label className="text-[13px] font-black text-[#1A2B28] pb-1 ml-1 flex items-center gap-1">
-                   Move-in Date <span className="text-red-500">*</span>
-                 </label>
+          <div className="flex gap-3">
+             <div className="flex-1 space-y-1.5">
+                  <label className="text-[12px] font-bold text-[#1A2B28] ml-1">
+                    Move-in <span className="text-red-500 font-black">*</span>
+                  </label>
                 <input 
                   type="date" 
                   value={formData.move_in_date}
@@ -293,170 +341,141 @@ function AddTenantForm() {
                     setFormData({...formData, move_in_date: e.target.value});
                     if (errors.move_in_date) setErrors({...errors, move_in_date: false});
                   }}
-                  className={`w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none ring-2 transition-all ${
-                    errors.move_in_date ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent'
+                  className={`w-full bg-[#EEF2F8] border-none rounded-xl p-4 text-[#1A2B28] outline-none ring-2 transition-all ${
+                    errors.move_in_date ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent focus:ring-[#008075]/20'
                   }`} 
                 />
              </div>
-             <div className="flex-1 space-y-2">
-                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Agreement</label>
+             <div className="flex-1 space-y-1.5">
+                  <label className="text-[12px] font-bold text-[#1A2B28] ml-1">Due Date <span className="text-red-500 font-black">*</span></label>
                 <div className="relative">
                   <select 
-                    value={formData.agreement_period}
-                    onChange={(e) => setFormData({...formData, agreement_period: e.target.value})}
-                    className={`w-full border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none appearance-none font-medium transition-all ${
-                      formData.roomId ? 'bg-[#EBFBF8] ring-2 ring-[#00685F]/5 shadow-sm' : 'bg-[#EEF2F8]'
+                    value={formData.due_day}
+                    onChange={(e) => setFormData({...formData, due_day: e.target.value})}
+                    className={`w-full border-none rounded-xl p-4 text-[#1A2B28] outline-none appearance-none font-bold transition-all ${
+                      formData.roomId ? 'bg-[#EBFBF8] ring-2 ring-[#00685F]/5' : 'bg-[#EEF2F8]'
                     }`}
                   >
-                    <option>11 Months</option>
-                    <option>12 Months</option>
-                    <option>6 Months</option>
-                    <option>Monthly</option>
+                    {[...Array(31)].map((_, i) => (
+                      <option key={i+1} value={i+1}>{i+1}</option>
+                    ))}
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#718096]">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                 </div>
              </div>
           </div>
-        </section>
 
-        {/* ROOM ASSIGNMENT SECTION */}
-        <section className="bg-[#F8FAFB] rounded-[32px] p-5 space-y-5 border border-slate-50">
-          <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-[#00685F] rounded-full"></div>
-            <h2 className="text-[16px] font-black text-[#1A2B28]">Room Assignment</h2>
-          </div>
-          
-          <div className="space-y-2">
-             <label className="text-[13px] font-black text-[#1A2B28] pb-1 ml-1 flex items-center gap-1">
-               Selected Allocation <span className="text-red-500">*</span>
-             </label>
-             <button 
-               onClick={navigateToSelection}
-               className={`w-full p-4.5 rounded-2xl flex items-center justify-between transition-all group active:scale-[0.98] ring-2 ${
-                 errors.roomId ? 'ring-red-500/50 bg-red-50/30' : 'ring-transparent'
-               } ${
-                 formData.roomId && !errors.roomId ? 'bg-[#EBFBF8] ring-2 ring-[#00685F]/5 shadow-sm' : 'bg-[#EEF2F8]'
-               }`}
-             >
-                <div className="flex items-center gap-4">
-                   <div className={`p-2.5 rounded-xl transition-all ${
-                     formData.roomId ? 'bg-[#00685F] text-white' : 'bg-white/50 text-[#00685F]'
-                   }`}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/>
-                      </svg>
-                   </div>
-                   <div className="flex flex-col text-left">
-                      <span className="text-[15px] font-black text-[#1A2B28] leading-tight">
-                        {formData.bedId ? `Bed ${formData.bedId.split('-').pop()}` : formData.roomId ? `Suite Selected` : 'Click to Allocate'}
-                      </span>
-                      {formData.roomId && (
-                        <span className="text-[10px] font-black text-[#00685F] uppercase tracking-widest mt-0.5">
-                          Live Allocation Ready
-                        </span>
-                      )}
-                   </div>
-                </div>
-                <div className={`transition-all ${formData.roomId ? 'text-[#00685F]' : 'text-[#ADB5BD]'} group-hover:translate-x-1`}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </div>
-             </button>
+          <div className="space-y-1.5">
+               <label className="text-[12px] font-bold text-[#1A2B28] ml-1">Agreement Period</label>
+             <div className="relative">
+               <select 
+                 value={formData.agreement_period}
+                 onChange={(e) => setFormData({...formData, agreement_period: e.target.value})}
+                 className={`w-full border-none rounded-xl p-4 text-[#1A2B28] outline-none appearance-none font-bold transition-all ${
+                   formData.roomId ? 'bg-[#EBFBF8] ring-2 ring-[#00685F]/5' : 'bg-[#EEF2F8]'
+                 }`}
+               >
+                 <option>11 Months</option>
+                 <option>12 Months</option>
+                 <option>6 Months</option>
+                 <option>Monthly</option>
+               </select>
+               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#718096]">
+                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+               </div>
+             </div>
           </div>
         </section>
 
         {/* VERIFICATION SECTION */}
-        <section className="bg-[#F8FAFB] rounded-[32px] p-5 space-y-5 border border-slate-50">
+        <section className="bg-[#F8FAFB] rounded-[28px] p-5 space-y-4 border border-slate-100/50">
           <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-[#00685F] rounded-full"></div>
-            <h2 className="text-[16px] font-black text-[#1A2B28]">Identity Verification</h2>
+            <div className="w-1 h-5 bg-[#00685F] rounded-full"></div>
+            <h2 className="text-[16px] font-black text-[#1A2B28]">Verification</h2>
           </div>
-          <div className="flex gap-4">
-             <div className="flex-1 space-y-2">
-                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">ID Type</label>
+          <div className="flex gap-3">
+             <div className="flex-1 space-y-1.5">
+                  <label className="text-[12px] font-bold text-[#1A2B28] ml-1">ID Type</label>
                 <div className="relative">
                   <select 
                     value={formData.id_type}
                     onChange={(e) => setFormData({...formData, id_type: e.target.value})}
-                    className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none appearance-none font-medium"
+                    className="w-full bg-[#EEF2F8] border-none rounded-xl p-4 text-[#1A2B28] outline-none appearance-none font-bold"
                   >
                     <option>Aadhaar</option>
                     <option>PAN Card</option>
                     <option>Passport</option>
                     <option>Voter ID</option>
-                    <option>Driving License</option>
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#718096]">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                 </div>
              </div>
-             <div className="flex-1 space-y-2">
-                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">ID Number</label>
+             <div className="flex-1 space-y-1.5">
+                  <label className="text-[12px] font-bold text-[#1A2B28] ml-1">ID Number</label>
                 <input 
                   type="text" 
                   placeholder="ID Number" 
                   value={formData.id_number}
                   onChange={(e) => setFormData({...formData, id_number: e.target.value})}
-                  className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none font-medium" 
+                  className="w-full bg-[#EEF2F8] border-none rounded-xl p-4 text-[#1A2B28] outline-none font-bold" 
                 />
              </div>
           </div>
         </section>
 
         {/* EMERGENCY CONTACT */}
-        <section className="bg-[#F8FAFB] rounded-[32px] p-5 space-y-5 border border-slate-50">
+        <section className="bg-[#F8FAFB] rounded-[28px] p-5 space-y-4 border border-slate-100/50">
           <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-[#00685F] rounded-full"></div>
+            <div className="w-1 h-5 bg-[#00685F] rounded-full"></div>
             <h2 className="text-[16px] font-black text-[#1A2B28]">Emergency Contact</h2>
           </div>
           <div className="space-y-4">
-             <div className="space-y-2">
-                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Contact Name</label>
+             <div className="space-y-1.5">
+                  <label className="text-[12px] font-bold text-[#1A2B28] ml-1">Contact Name</label>
                 <input 
                   type="text" 
-                  placeholder="Full name of contact" 
+                  placeholder="Full name" 
                   value={formData.emergency_contact_name}
                   onChange={(e) => setFormData({...formData, emergency_contact_name: e.target.value})}
-                  className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none font-medium" 
+                  className="w-full bg-[#EEF2F8] border-none rounded-xl p-4 text-[#1A2B28] outline-none font-bold" 
                 />
              </div>
-             <div className="space-y-2">
-                 <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Phone Number</label>
+             <div className="space-y-1.5">
+                  <label className="text-[12px] font-bold text-[#1A2B28] ml-1">Phone Number</label>
                 <input 
                   type="tel" 
                   placeholder="+91 90000 00000" 
                   value={formData.emergency_contact_phone}
                   onChange={(e) => setFormData({...formData, emergency_contact_phone: e.target.value})}
-                  className="w-full bg-[#EEF2F8] border-none rounded-2xl p-4.5 text-[#1A2B28] outline-none font-medium" 
+                  className="w-full bg-[#EEF2F8] border-none rounded-xl p-4 text-[#1A2B28] outline-none font-bold" 
                 />
              </div>
           </div>
         </section>
       </main>
 
-      <footer className="px-4 pt-10 pb-10 flex gap-4">
+      <footer className="px-4 py-8 flex gap-3">
         <button 
           type="button"
           onClick={() => {
             sessionStorage.removeItem('tenant_form_draft');
             router.replace('/tenants');
           }}
-          className="flex-1 py-4 rounded-[20px] bg-[#F1F4F8] text-[#1A2B28] font-black hover:bg-slate-200 transition-colors"
+          className="flex-1 py-4 rounded-[20px] bg-[#F1F4F8] text-[#1A2B28] font-bold hover:bg-slate-200 transition-all active:scale-[0.98]"
         >
           Cancel
         </button>
         <button 
           onClick={handleSave} 
           disabled={isSaving}
-          className={`flex-[1.2] bg-[#00685F] p-5 rounded-[24px] text-white font-black shadow-2xl shadow-teal-900/10 flex items-center justify-center gap-3 transition-all ${isSaving ? 'opacity-80 scale-95' : 'active:scale-95'}`}
+          className={`flex-[1.5] bg-[#00685F] p-4 rounded-[20px] text-white font-bold shadow-lg shadow-teal-900/10 flex items-center justify-center gap-2 transition-all ${isSaving ? 'opacity-80 scale-95' : 'active:scale-[0.98]'}`}
         >
           {isSaving ? (
-            <>
-              <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-              Finalizing...
-            </>
+            <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
           ) : (
             'Onboard Resident'
           )}

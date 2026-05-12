@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { classifyUser } from "@/actions/auth/classifyUser";
 import { Suspense } from 'react';
 
 function OtpVerifyContent() {
@@ -12,7 +13,7 @@ function OtpVerifyContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const otpRefs = useRef([]);
-  const [timer, setTimer] = useState(42);
+  const [timer, setTimer] = useState(120);
 
   useEffect(() => {
     let interval;
@@ -39,8 +40,7 @@ function OtpVerifyContent() {
   };
 
   const searchParams = useSearchParams();
-  const role = searchParams.get("role") || "owner";
-  const phone = searchParams.get("phone") || "";
+  const email = searchParams.get("email") || "";
 
   const handleVerify = async () => {
     setError("");
@@ -53,13 +53,10 @@ function OtpVerifyContent() {
     setIsLoading(true);
     const supabase = createClient();
     
-    // Format phone with +91 (Supabase will pass this to your new webhook)
-    const formattedPhone = `+91${phone}`;
-
     const { data, error: authError } = await supabase.auth.verifyOtp({
-      phone: formattedPhone,
+      email: email,
       token: enteredOtp,
-      type: 'sms',
+      type: 'email',
     });
 
     if (authError) {
@@ -69,18 +66,9 @@ function OtpVerifyContent() {
     }
 
     setSuccess(true);
-    setIsLoading(false);
     
-    // Navigate after success toast
-    setTimeout(() => {
-      if (phone === "9952466714") {
-        router.push("/admin/dashboard");
-      } else if (role === "owner") {
-        router.push("/dashboard");
-      } else {
-        router.push("/welcome-tenant"); 
-      }
-    }, 2000);
+    // Use server action to determine where to go
+    await classifyUser();
   };
 
   return (
@@ -94,9 +82,9 @@ function OtpVerifyContent() {
         </nav>
 
         <header className="mb-10 pl-2">
-          <h2 className="text-[28px] font-bold text-[#1A2B28] mb-1">Verify your number</h2>
+          <h2 className="text-[28px] font-bold text-[#1A2B28] mb-1">Verify your email</h2>
           <p className="text-[#718096] font-medium text-[15px]">
-            OTP sent to <span className="text-[#1A2B28] font-bold">+91 {phone || "93636 58160"}</span>
+            OTP sent to <span className="text-[#1A2B28] font-bold">{email || "your email"}</span>
             <button onClick={() => router.push("/login")} className="ml-2 text-[#008075] font-bold hover:underline decoration-2">Change</button>
           </p>
         </header>
@@ -127,7 +115,7 @@ function OtpVerifyContent() {
         </div>
 
         <p className="text-center text-[#718096] font-bold text-sm mb-12 flex items-center justify-center gap-1.5">
-          Resend OTP in <span className="text-[#1A2B28] tabular-nums">0:{timer.toString().padStart(2, "0")}</span>
+          Resend OTP in <span className="text-[#1A2B28] tabular-nums">{Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</span>
         </p>
 
         <button

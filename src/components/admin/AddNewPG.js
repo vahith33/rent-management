@@ -17,6 +17,7 @@ export default function AddNewPG() {
 
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
     phone: '',
     property_name: '',
     address: '',
@@ -39,6 +40,7 @@ export default function AddNewPG() {
 
     const errors = {}
     if (!formData.name.trim()) errors.name = "Name is required"
+    if (!formData.email || !formData.email.includes('@')) errors.email = "Enter a valid email address"
     if (!formData.phone || !/^\d{10}$/.test(formData.phone)) errors.phone = "Enter a valid 10-digit mobile number"
     if (!formData.property_name.trim()) errors.property_name = "Property name is required"
 
@@ -55,6 +57,8 @@ export default function AddNewPG() {
       
       if (result.error === 'validation') {
         setFieldErrors(result.fields || {})
+      } else if (result.error === 'email_exists') {
+        setFieldErrors({ email: result.message || 'Email exists' })
       } else if (result.error === 'phone_exists') {
         setFieldErrors({ phone: result.message || 'Phone exists' })
       } else if (result.error) {
@@ -82,7 +86,7 @@ export default function AddNewPG() {
           <button 
             onClick={() => {
               setIsSuccess(false)
-              setFormData({ name: '', phone: '', property_name: '', address: '', plan_rupee: '', admin_notes: '' })
+              setFormData({ name: '', email: '', phone: '', property_name: '', address: '', plan_rupee: '', admin_notes: '' })
             }}
             className="px-6 py-4 rounded-2xl font-bold text-[#1A2B28] bg-slate-100 hover:bg-slate-200 transition-colors"
           >
@@ -116,14 +120,26 @@ export default function AddNewPG() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-1.5">
-          <label className="text-[13px] font-bold text-[#1A2B28] ml-1">Owner Full Name</label>
-          <input 
-            type="text" name="name" disabled={isPending}
-            placeholder="e.g. Suresh Kumar" value={formData.name} onChange={handleChange}
-            className={`w-full bg-[#EEF2F8] border-2 rounded-2xl p-4 text-[#1A2B28] outline-none text-sm font-medium transition-colors ${fieldErrors.name ? 'border-red-400 focus:border-red-500' : 'border-transparent focus:border-[#008075]/30'}`}
-          />
-          {fieldErrors.name && <p className="text-[11px] font-bold text-red-500 ml-1">{fieldErrors.name}</p>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-bold text-[#1A2B28] ml-1">Owner Full Name</label>
+            <input 
+              type="text" name="name" disabled={isPending}
+              placeholder="e.g. Suresh Kumar" value={formData.name} onChange={handleChange}
+              className={`w-full bg-[#EEF2F8] border-2 rounded-2xl p-4 text-[#1A2B28] outline-none text-sm font-medium transition-colors ${fieldErrors.name ? 'border-red-400 focus:border-red-500' : 'border-transparent focus:border-[#008075]/30'}`}
+            />
+            {fieldErrors.name && <p className="text-[11px] font-bold text-red-500 ml-1">{fieldErrors.name}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-bold text-[#1A2B28] ml-1">Email Address</label>
+            <input 
+              type="email" name="email" disabled={isPending}
+              placeholder="suresh@example.com" value={formData.email} onChange={handleChange}
+              className={`w-full bg-[#EEF2F8] border-2 rounded-2xl p-4 text-[#1A2B28] outline-none text-sm font-medium transition-colors ${fieldErrors.email ? 'border-red-400 focus:border-red-500' : 'border-transparent focus:border-[#008075]/30'}`}
+            />
+            {fieldErrors.email && <p className="text-[11px] font-bold text-red-500 ml-1">{fieldErrors.email}</p>}
+          </div>
         </div>
 
         <div className="space-y-1.5">

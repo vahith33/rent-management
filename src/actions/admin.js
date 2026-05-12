@@ -8,7 +8,7 @@ export async function getAllPGs() {
   const { data, error } = await supabase
     .from('owners')
     .select(`
-      id, name, phone, status, plan_rupee, admin_notes, created_at,
+      id, name, email, phone, status, plan_rupee, admin_notes, created_at,
       properties ( name, address ),
       tenant_assignments ( id, status )
     `)
@@ -21,15 +21,13 @@ export async function getAllPGs() {
 
   // Transform data to match requested format
   const formattedData = data.map((owner) => {
-    // property could be an array or object depending on relation type, assuming single property per owner based on query
     const property = owner.properties && owner.properties.length > 0 ? owner.properties[0] : owner.properties || {}
-    
-    // count active tenants
     const activeTenants = owner.tenant_assignments ? owner.tenant_assignments.filter((ta) => ta.status === 'active').length : 0
 
     return {
       id: owner.id,
       name: owner.name,
+      email: owner.email,
       phone: owner.phone,
       status: owner.status,
       plan_rupee: owner.plan_rupee,
@@ -46,6 +44,7 @@ export async function getAllPGs() {
 
 export async function addPG(formData) {
   const name = formData.get('name')
+  const email = formData.get('email')
   const phone = formData.get('phone')
   const property_name = formData.get('property_name')
   const address = formData.get('address')
@@ -53,6 +52,7 @@ export async function addPG(formData) {
   const admin_notes = formData.get('admin_notes')
 
   if (!name || name.trim() === '') return { error: 'validation', fields: { name: 'Name is required' } }
+  if (!email || !email.includes('@')) return { error: 'validation', fields: { email: 'Enter a valid email' } }
   if (!phone || !/^\d{10}$/.test(phone)) return { error: 'validation', fields: { phone: 'Enter a valid 10-digit mobile number' } }
   if (!property_name || property_name.trim() === '') return { error: 'validation', fields: { property_name: 'Property name is required' } }
   
@@ -64,14 +64,15 @@ export async function addPG(formData) {
 
   const supabase = createServiceRoleClient()
 
-  // a. Check if phone already exists
-  const { data: existingUser } = await supabase.from('owners').select('id').eq('phone', phone).single()
-  if (existingUser) return { error: 'phone_exists', message: 'This number is already registered.' }
+  // a. Check if email already exists
+  const { data: existingEmail } = await supabase.from('owners').select('id').eq('email', email).single()
+  if (existingEmail) return { error: 'email_exists', message: 'This email is already registered.' }
 
-  // b. Create Supabase Auth user
+  // b. Create Supabase Auth user (Email based since we use Email OTP)
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    phone: '+91' + phone,
-    phone_confirm: true
+    email: email,
+    email_confirm: true,
+    user_metadata: { name, phone }
   })
   if (authError) return { error: 'auth_failed', message: authError.message }
 
@@ -79,9 +80,9 @@ export async function addPG(formData) {
 
   // c. Insert into owners
   const { data: newOwner, error: ownerError } = await supabase.from('owners').insert({
-    id: userId,
     supabase_user_id: userId,
     name,
+    email,
     phone,
     plan_rupee,
     admin_notes,
@@ -177,7 +178,7 @@ export async function getPGById(ownerId) {
   const { data: owner, error } = await supabase
     .from('owners')
     .select(`
-      id, name, phone, status, plan_rupee, admin_notes, created_at,
+      id, name, email, phone, status, plan_rupee, admin_notes, created_at,
       properties ( name, address ),
       tenant_assignments ( id, status )
     `)
@@ -195,6 +196,7 @@ export async function getPGById(ownerId) {
   return {
     id: owner.id,
     name: owner.name,
+    email: owner.email,
     phone: owner.phone,
     status: owner.status,
     plan_rupee: owner.plan_rupee,

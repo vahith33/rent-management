@@ -57,15 +57,8 @@ export default function RemoveTenantPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFB] font-body pb-20">
-      {/* Header */}
-      <header className="bg-white px-6 py-6 flex items-center gap-4 sticky top-0 z-50 border-b border-slate-100 shadow-sm">
-        <button onClick={() => router.back()} className="p-2 hover:bg-[#F1F4F8] rounded-full transition-colors">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A2B28" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        </button>
-        <h1 className="text-[20px] font-bold text-[#1A2B28] font-heading">Remove Tenant</h1>
-      </header>
 
-      <main className="px-6 py-8 space-y-8">
+      <main className="px-6 py-6 space-y-3">
         <div className="space-y-2">
           <h2 className="text-[22px] font-bold text-[#1A2B28] font-heading">Exit Process</h2>
           <p className="text-[14px] font-medium text-[#718096]">Permanently remove a tenant from your records</p>
@@ -78,7 +71,7 @@ export default function RemoveTenantPage() {
           </div>
           <input 
             type="text" 
-            placeholder="Search by name or room..." 
+            placeholder="Search by name, room or phone..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-white pl-14 pr-6 py-5 rounded-[24px] border border-slate-200 outline-none focus:ring-2 focus:ring-[#EB5757]/20 focus:border-[#EB5757] transition-all text-[14px] font-medium text-[#1A2B28] shadow-sm"
@@ -87,34 +80,41 @@ export default function RemoveTenantPage() {
 
         {/* Tenant List */}
         <div className="space-y-4">
-          <h3 className="text-[20px] font-bold text-[#1A2B28] font-heading">Active Residents ({filteredTenants.length})</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-[20px] font-bold text-[#1A2B28] font-heading">Active Residents ({loading ? '...' : filteredTenants.length})</h3>
+            {loading && <div className="w-5 h-5 border-2 border-[#EB5757]/30 border-t-[#EB5757] rounded-full animate-spin"></div>}
+          </div>
           
-          {filteredTenants.length > 0 ? (
+          {!loading && filteredTenants.length > 0 ? (
             <div className="grid gap-4">
               {filteredTenants.map(tenant => (
                 <div key={tenant.id} className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-red-100 transition-all">
                   <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 ${tenant.id === 1 ? 'bg-[#008075]' : 'bg-slate-100'} rounded-2xl flex items-center justify-center shadow-sm`}>
-                      <span className={`text-lg font-bold ${tenant.id === 1 ? 'text-white' : 'text-slate-500'}`}>{tenant.initials}</span>
+                    <div className="w-12 h-12 bg-[#008075] text-white rounded-2xl flex items-center justify-center shadow-sm">
+                      <span className="text-lg font-bold">{tenant.initials}</span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[16px] font-bold text-[#1A2B28]">{tenant.name}</span>
-                      <span className="text-[12px] font-bold text-[#ABB3B8] mt-0.5">Room {tenant.room}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[12px] font-bold text-[#008075]">{tenant.room}</span>
+                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                        <span className="text-[11px] font-medium text-[#ABB3B8]">{tenant.phone}</span>
+                      </div>
                     </div>
                   </div>
                   <button 
                     onClick={() => handleRemoveInitiate(tenant)}
                     className="bg-red-50 p-3 rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-90"
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2.18 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   </button>
                 </div>
               ))}
             </div>
-          ) : (
+          ) : !loading && (
             <div className="flex flex-col items-center py-12 text-slate-400 gap-3">
                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-               <p className="text-sm font-medium">No tenants match your search</p>
+               <p className="text-sm font-medium">{searchQuery ? 'No matching tenants found' : 'No active tenants available'}</p>
             </div>
           )}
         </div>
@@ -125,7 +125,7 @@ export default function RemoveTenantPage() {
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-[#1A2B28]/40 backdrop-blur-sm p-6 animate-in fade-in duration-300">
           <div className="bg-white w-full max-w-[400px] rounded-[40px] p-8 flex flex-col items-center gap-6 shadow-2xl animate-in zoom-in-95 pointer-events-auto">
             <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center text-red-500">
-               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2.18 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </div>
             <div className="text-center space-y-2">
               <h2 className="text-[22px] font-bold text-[#1A2B28] font-heading">Confirm Removal</h2>

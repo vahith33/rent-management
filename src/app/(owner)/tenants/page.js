@@ -62,26 +62,35 @@ export default function TenantsPage() {
     }
   };
 
+  const handleEdit = () => {
+    const activeAssignment = selectedTenant.tenant_assignments?.find(ta => ta.status === 'ACTIVE') || selectedTenant.tenant_assignments?.[0];
+    const params = new URLSearchParams({
+      id: selectedTenant.id,
+      name: selectedTenant.name || '',
+      phone: selectedTenant.phone || '',
+      gender: selectedTenant.gender || 'Male',
+      rent: String(selectedTenant.rent || '').replace(/[^\d]/g, ''),
+      deposit: String(selectedTenant.deposit || '').replace(/[^\d]/g, ''),
+      move_in_date: selectedTenant.move_in_date || '',
+      agreement_period: selectedTenant.agreement_period || '11 Months',
+      id_type: selectedTenant.id_type || 'Aadhaar',
+      id_number: selectedTenant.id_number || '',
+      emergency_contact_name: selectedTenant.emergency_contact_name || '',
+      emergency_contact_phone: selectedTenant.emergency_contact_phone || '',
+      selectedRoomId: activeAssignment?.room_id || '',
+      selectedBedId: activeAssignment?.bed_index || ''
+    });
+    router.push(`/tenants/add?${params.toString()}`);
+  };
+
   // ==========================================
   // VIEW: TENANT DETAIL
   // ==========================================
   if (view === "detail" && selectedTenant) {
      return (
         <div className="min-h-screen bg-white animate-in slide-in-from-right duration-500 font-body pb-10">
-           {/* Header */}
-           <header className="bg-white/80 backdrop-blur-md px-6 py-5 flex items-center gap-4 sticky top-0 z-50 border-b border-slate-50">
-             <button 
-               onClick={() => setView('list')} 
-               className="p-2 -ml-2 text-[#00685F] bg-[#EBFBF8] rounded-xl active:scale-90 transition-transform"
-             >
-               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                 <line x1="19" y1="12" x2="5" y2="12" />
-                 <polyline points="12 19 5 12 12 5" />
-               </svg>
-             </button>
-             <h1 className="text-lg font-black text-[#1A2B28] tracking-tight">Resident Details</h1>
-           </header>
-           <main className="px-5 py-6 space-y-6">
+
+           <main className="px-4 py-2 space-y-4">
               {/* Hero Card */}
               <div className="bg-white rounded-[32px] p-8 flex flex-col items-center text-center shadow-[0_4px_25px_rgba(0,0,0,0.03)] border border-slate-50 relative overflow-hidden">
                  <div className="relative mb-4">
@@ -114,132 +123,62 @@ export default function TenantsPage() {
                  </div>
               </div>
 
-              {/* Personal Info */}
-              <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-50 space-y-6">
-                 <div className="flex items-center gap-3">
-                    <div className="text-[#008075]">
-                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              {/* Info Sections */}
+              <div className="bg-[#F8FAFB] rounded-[32px] p-6 space-y-6 border border-slate-50">
+                 <div>
+                    <h3 className="text-[10px] font-black text-[#718096] uppercase tracking-widest mb-4">Resident Information</h3>
+                    <div className="grid grid-cols-2 gap-y-6">
+                       <div className="space-y-1">
+                          <p className="text-[11px] font-bold text-[#718096]">Phone Number</p>
+                          <p className="text-sm font-black text-[#1A2B28]">{selectedTenant.phone}</p>
+                       </div>
+                       <div className="space-y-1">
+                          <p className="text-[11px] font-bold text-[#718096]">Move-in Date</p>
+                          <p className="text-sm font-black text-[#1A2B28]">{selectedTenant.moveIn}</p>
+                       </div>
+                       <div className="space-y-1">
+                          <p className="text-[11px] font-bold text-[#718096]">ID Verification</p>
+                          <div className="flex flex-col gap-1">
+                             <p className="text-sm font-black text-[#1A2B28]">{selectedTenant.govId}</p>
+                             {selectedTenant.id_number ? (
+                                <div className="flex items-center gap-1 bg-[#EBFBF8] w-fit px-1.5 py-0.5 rounded-full">
+                                   <div className="w-1 h-1 bg-[#008075] rounded-full animate-pulse"></div>
+                                   <span className="text-[8px] font-black text-[#008075] uppercase">Verified</span>
+                                </div>
+                             ) : (
+                                <span className="text-[9px] font-bold text-red-400 uppercase italic">Not Entered</span>
+                             )}
+                          </div>
+                       </div>
+                       <div className="space-y-1">
+                          <p className="text-[11px] font-bold text-[#718096]">Agreement</p>
+                          <p className="text-sm font-black text-[#1A2B28]">{selectedTenant.period}</p>
+                       </div>
                     </div>
-                    <h3 className="font-bold text-base text-[#1A2B28]">Personal Info</h3>
                  </div>
-                 <div className="space-y-6 pt-2">
+
+                 <div className="pt-4 border-t border-slate-200/50">
+                    <h3 className="text-[10px] font-black text-[#718096] uppercase tracking-widest mb-4">Emergency Contact</h3>
                     <div className="flex items-center justify-between">
-                       <div>
-                           <p className="text-[12px] font-bold text-[#718096] mb-0.5">Phone</p>
-                          <p className="text-sm font-bold text-[#1A2B28]">{selectedTenant.phone}</p>
+                       <div className="space-y-0.5">
+                          <p className="text-sm font-black text-[#1A2B28]">{selectedTenant.emergency_contact_name || 'Not Provided'}</p>
+                          <p className="text-[11px] font-bold text-[#718096]">Primary Contact</p>
                        </div>
-                       <div className="text-[#008075]">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                       </div>
+                       <a href={`tel:${selectedTenant.emergency_contact_phone}`} className="p-3 bg-white rounded-xl text-[#00685F] shadow-sm border border-slate-100 active:scale-90 transition-all">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                       </a>
                     </div>
-                    <div>
-                       <p className="text-[12px] font-bold text-[#718096] mb-1.5">Gov Id</p>
-                       <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-[#1A2B28]">{selectedTenant.govId}</span>
-                          <div className="bg-[#EBFBF8] px-2 py-0.5 rounded flex items-center gap-1">
-                             <div className="bg-[#008075] rounded-full p-0.5">
-                                <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                             </div>
-                             <span className="text-[10px] font-black text-[#008075]">Verified</span>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
-              </div>
-
-              {/* Stay Details */}
-              <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-50 space-y-6">
-                 <div className="flex items-center gap-3">
-                    <div className="text-[#008075]">
-                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    </div>
-                    <h3 className="font-bold text-base text-[#1A2B28]">Stay Details</h3>
-                 </div>
-                 <div className="grid grid-cols-2 gap-8 pt-2">
-                    <div>
-                       <p className="text-[12px] font-bold text-[#718096] mb-1">Move-in Date</p>
-                       <p className="text-sm font-bold text-[#1A2B28]">{selectedTenant.moveIn}</p>
-                    </div>
-                    <div>
-                       <p className="text-[12px] font-bold text-[#718096] mb-1">Agreement Period</p>
-                       <p className="text-sm font-bold text-[#1A2B28]">{selectedTenant.period}</p>
-                    </div>
-                 </div>
-              </div>
-
-              {/* Payment History */}
-              <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-50 space-y-6">
-                 <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                       <div className="text-[#008075]">
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                       </div>
-                       <h3 className="font-bold text-base text-[#1A2B28]">Payment History</h3>
-                    </div>
-                    <button className="text-[12px] font-black text-[#00685F] hover:underline transition-all">View All</button>
-                 </div>
-                 
-                 <div className="space-y-6 pt-2">
-                    {[
-                       { month: "Current Month", date: "Due Soon" }
-                    ].map((payment, i) => (
-                       <div key={i} className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                             <div className="w-10 h-10 bg-[#EBFBF8] rounded-full flex items-center justify-center text-[#008075]">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                             </div>
-                             <div>
-                                <p className="text-sm font-bold text-[#1A2B28]">{payment.month}</p>
-                                <p className="text-[10px] font-medium text-[#718096]">{payment.date}</p>
-                             </div>
-                          </div>
-                          <div className="text-right">
-                             <p className="text-sm font-bold text-[#1A2B28]">{selectedTenant.rent}</p>
-                             <span className="text-[10px] font-black text-[#008075]">Pending</span>
-                          </div>
-                       </div>
-                    ))}
-                 </div>
-              </div>
-
-              {/* Documents */}
-              <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-50 space-y-6">
-                 <div className="flex items-center gap-3">
-                    <div className="text-[#008075]">
-                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                    </div>
-                    <h3 className="font-bold text-base text-[#1A2B28]">Documents</h3>
-                 </div>
-                 
-                 <div className="space-y-3 pt-2">
-                    {[
-                       { name: "Identity Proof", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21h-2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/><rect x="14" y="3" width="7" height="18" rx="1"/><path d="M10 8h4"/><path d="M10 12h4"/><path d="M10 16h4"/></svg> }
-                    ].map((doc, i) => (
-                       <div key={i} className="flex items-center justify-between bg-[#F1F4F8] p-4 rounded-2xl border border-slate-50">
-                          <div className="flex items-center gap-4">
-                             <div className="bg-white p-2 rounded-xl text-[#008075] shadow-sm">
-                                {doc.icon}
-                             </div>
-                             <span className="text-sm font-bold text-[#1A2B28]">{doc.name}</span>
-                          </div>
-                          <button className="text-[#718096] hover:text-[#008075] transition-colors">
-                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                          </button>
-                       </div>
-                    ))}
                  </div>
               </div>
 
               {/* Action Buttons */}
               <div className="space-y-4 pt-4">
-                 <div className="flex gap-4">
-                    <button className="flex-1 bg-white border border-slate-200 py-4 rounded-[18px] text-sm font-bold text-[#1A2B28] shadow-sm active:scale-95 transition-all">
-                       Edit Details
-                    </button>
-                    <button className="flex-1 bg-[#00675B] py-4 rounded-[18px] text-sm font-bold text-white shadow-lg shadow-[#00675B]/20 active:scale-95 transition-all">
-                       Message Tenant
-                    </button>
-                 </div>
+                 <button 
+                   onClick={handleEdit}
+                   className="w-full bg-[#00685F]/5 border border-[#00685F]/10 py-4.5 rounded-[20px] text-sm font-black text-[#00685F] shadow-sm active:scale-95 transition-all"
+                 >
+                    Edit Resident Details
+                 </button>
                  <button 
                    onClick={handleRemove}
                    className="w-full bg-white border border-red-100 py-4 rounded-[18px] text-sm font-bold text-red-500 shadow-sm flex items-center justify-center gap-2 active:scale-95 hover:bg-red-50 transition-colors"
@@ -264,19 +203,7 @@ export default function TenantsPage() {
   if (view === "list") {
     return (
        <div className="min-h-screen bg-[#F8FAFB] animate-in fade-in duration-500 font-body pb-32">
-          {/* Header */}
-          <header className="bg-white/80 backdrop-blur-md px-6 py-5 flex items-center gap-4 sticky top-0 z-50 border-b border-slate-50">
-            <button 
-              onClick={() => setView('menu')} 
-              className="p-2 -ml-2 text-[#00685F] bg-[#EBFBF8] rounded-xl active:scale-90 transition-transform"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12" />
-                <polyline points="12 19 5 12 12 5" />
-              </svg>
-            </button>
-            <h1 className="text-lg font-black text-[#1A2B28] tracking-tight">Active Residents</h1>
-          </header>
+
           <main className="px-6 py-3 space-y-5">
 
 
