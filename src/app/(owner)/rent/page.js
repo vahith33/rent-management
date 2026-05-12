@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getRentPayments, updateRentPayment, getRentAnalytics } from '@/actions/owner';
+import { getRentPayments, updateRentPayment, getRentAnalytics, getRentCounts } from '@/actions/owner';
 
 export default function RentManagementPage() {
   const router = useRouter();
@@ -26,11 +26,8 @@ export default function RentManagementPage() {
         const data = await getRentPayments(view === 'paid' ? 'PAID' : 'UNPAID');
         setTenants(data);
       } else if (view === 'menu') {
-        const [paid, unpaid] = await Promise.all([
-          getRentPayments('PAID'),
-          getRentPayments('UNPAID')
-        ]);
-        setCounts({ paid: paid.length, unpaid: unpaid.length });
+        const data = await getRentCounts();
+        setCounts(data);
       } else if (view === 'analytics') {
         const data = await getRentAnalytics();
         setAnalyticsData(data);

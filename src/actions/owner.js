@@ -567,6 +567,41 @@ export async function getRentPayments(status) {
   })
 }
 
+// Fast count-only query for the rent menu page.
+// Instead of fetching ALL paid + ALL unpaid records with joins (6-8 DB calls),
+// this does 1 auth lookup + 1 tenant query + 2 lightweight count queries in parallel.
+export async function getRentCounts() {
+  const ownerId = await getAuthenticatedOwnerId()
+  const supabase = createServiceRoleClient()
+
+  const { data: tenants } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('owner_id', ownerId)
+
+  const tenantIds = tenants?.map(t => t.id) || []
+  if (tenantIds.length === 0) return { paid: 0, unpaid: 0 }
+
+  // Use count queries — these return a number, NOT all rows
+  const [paidRes, unpaidRes] = await Promise.all([
+    supabase
+      .from('rent_payments')
+      .select('id', { count: 'exact', head: true })
+      .in('tenant_id', tenantIds)
+      .eq('status', 'PAID'),
+    supabase
+      .from('rent_payments')
+      .select('id', { count: 'exact', head: true })
+      .in('tenant_id', tenantIds)
+      .eq('status', 'UNPAID')
+  ])
+
+  return {
+    paid: paidRes.count || 0,
+    unpaid: unpaidRes.count || 0
+  }
+}
+
 export async function updateRentPayment(paymentId, details) {
   const supabase = createServiceRoleClient()
   
