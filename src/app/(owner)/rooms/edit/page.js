@@ -81,8 +81,22 @@ function EditRoomContent() {
   };
 
   if (!mounted || isLoading) return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-       <div className="w-10 h-10 border-4 border-[#00685F]/20 border-t-[#00685F] rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-white font-body">
+      <header className="bg-white px-6 py-6 flex items-center gap-4 border-b border-slate-50">
+        <div className="w-10 h-10 bg-slate-50 rounded-xl animate-pulse"></div>
+        <div className="w-32 h-6 bg-slate-50 rounded animate-pulse"></div>
+      </header>
+      <main className="px-6 py-8 space-y-10">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-6 bg-slate-100 rounded-full animate-pulse"></div>
+              <div className="w-40 h-5 bg-slate-50 rounded animate-pulse"></div>
+            </div>
+            <div className="h-24 bg-[#F8FAFB] rounded-[32px] animate-pulse"></div>
+          </div>
+        ))}
+      </main>
     </div>
   );
 

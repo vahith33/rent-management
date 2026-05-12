@@ -29,6 +29,7 @@ export default function ManagePGClient({ pg }) {
   // Edit form state
   const [editFormData, setEditFormData] = useState({ 
     name: pg.name || '', 
+    email: pg.email || '',
     property_name: pg.property_name || '', 
     address: pg.address || '', 
     plan_rupee: pg.plan_rupee || '', 
@@ -57,6 +58,7 @@ export default function ManagePGClient({ pg }) {
     startTransition(async () => {
       const formData = new FormData()
       formData.append('name', editFormData.name)
+      formData.append('email', editFormData.email)
       formData.append('property_name', editFormData.property_name)
       formData.append('address', editFormData.address)
       formData.append('plan_rupee', editFormData.plan_rupee)
@@ -96,11 +98,19 @@ export default function ManagePGClient({ pg }) {
               </div>
               <div className="space-y-1">
                 <h2 className="text-xl font-black text-[#1A2B28]">{pg.name}</h2>
-                <div className="flex items-center gap-2 text-[13px] font-bold text-[#718096]">
-                  <Smartphone size={14} />
-                  <span>{pg.phone}</span>
+                <div className="flex flex-col gap-1.5 text-[13px] font-bold text-[#718096]">
+                  <div className="flex items-center gap-2">
+                    <Smartphone size={14} className="text-[#00685F]" />
+                    <span>{pg.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-[#EBFBF8] rounded-md flex items-center justify-center text-[10px] font-black text-[#00685F]">@</div>
+                    <span className={!pg.email ? 'text-red-400 italic font-medium' : ''}>
+                      {pg.email || 'No email registered'}
+                    </span>
+                  </div>
                 </div>
-                <div className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider mt-1 ${pg.status === 'active' ? 'bg-[#EBFBF8] text-[#008075]' : 'bg-red-50 text-red-600'}`}>
+                <div className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider mt-2 ${pg.status === 'active' ? 'bg-[#EBFBF8] text-[#008075]' : 'bg-red-50 text-red-600'}`}>
                   {pg.status}
                 </div>
               </div>
@@ -110,9 +120,10 @@ export default function ManagePGClient({ pg }) {
                <div className="space-y-1">
                   <div className="flex items-center gap-2 text-[#718096]">
                     <Building2 size={14} />
-                    <span className="text-[12px] font-bold">Property</span>
+                    <span className="text-[12px] font-bold">Property & Contact</span>
                   </div>
                   <p className="font-bold text-[#1A2B28]">{pg.property_name}</p>
+                  <p className="text-[13px] text-[#00685F] font-bold">{pg.email}</p>
                   <p className="text-[13px] text-[#718096]">{pg.address || 'No address set'}</p>
                </div>
                <div className="space-y-1">
@@ -211,6 +222,10 @@ export default function ManagePGClient({ pg }) {
                  <div className="space-y-1">
                    <label className="text-[12px] font-black text-[#1A2B28] ml-1">Owner Full Name</label>
                    <input required type="text" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} className="w-full bg-[#F1F4F8] border-none rounded-2xl p-4 text-[#1A2B28] outline-none text-sm font-bold" />
+                 </div>
+                 <div className="space-y-1">
+                   <label className="text-[12px] font-black text-[#1A2B28] ml-1">Email Address</label>
+                   <input required type="email" value={editFormData.email} onChange={e => setEditFormData({...editFormData, email: e.target.value})} className="w-full bg-[#F1F4F8] border-none rounded-2xl p-4 text-[#1A2B28] outline-none text-sm font-bold" />
                  </div>
                  <div className="space-y-1">
                    <label className="text-[12px] font-black text-[#1A2B28] ml-1">Property Name</label>

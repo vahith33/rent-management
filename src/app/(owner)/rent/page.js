@@ -348,44 +348,59 @@ export default function RentManagementPage() {
         </div>
 
         <div className="grid gap-5">
-          <button 
-            onClick={() => switchView('unpaid')}
-            className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
-          >
-            <div className={`bg-red-500 text-white p-4.5 rounded-2xl shadow-lg shadow-red-900/10`}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            </div>
-            <div className="flex flex-col items-start text-left">
-              <span className="text-xl font-black text-[#1A2B28]">Unpaid Tenants</span>
-              <span className="text-[12px] font-bold text-red-500 mt-1">{loading ? '...' : counts.unpaid} Pending Collections</span>
-            </div>
-          </button>
+          {loading && !cache.current.counts ? (
+            // High-fidelity Menu Skeleton
+            [...Array(3)].map((_, i) => (
+              <div key={i} className="w-full bg-white p-7 rounded-[32px] border border-slate-50 flex items-center gap-6 animate-pulse">
+                <div className="w-14 h-14 bg-slate-100 rounded-2xl"></div>
+                <div className="flex flex-col gap-2">
+                  <div className="w-32 h-5 bg-slate-100 rounded-lg"></div>
+                  <div className="w-24 h-3 bg-slate-100 rounded-md"></div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <>
+              <button 
+                onClick={() => switchView('unpaid')}
+                className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
+              >
+                <div className={`bg-red-500 text-white p-4.5 rounded-2xl shadow-lg shadow-red-900/10`}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <div className="flex flex-col items-start text-left">
+                  <span className="text-xl font-black text-[#1A2B28]">Unpaid Tenants</span>
+                  <span className="text-[12px] font-bold text-red-500 mt-1">{loading ? 'Updating...' : `${counts.unpaid} Pending Collections`}</span>
+                </div>
+              </button>
 
-          <button 
-            onClick={() => switchView('paid')}
-            className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
-          >
-            <div className={`bg-[#008075] text-white p-4.5 rounded-2xl shadow-lg shadow-teal-900/10`}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            </div>
-            <div className="flex flex-col items-start text-left">
-              <span className="text-xl font-black text-[#1A2B28]">Paid Tenants</span>
-              <span className="text-[12px] font-bold text-[#008075] mt-1">{loading ? '...' : counts.paid} Cleared this Month</span>
-            </div>
-          </button>
+              <button 
+                onClick={() => switchView('paid')}
+                className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
+              >
+                <div className={`bg-[#008075] text-white p-4.5 rounded-2xl shadow-lg shadow-teal-900/10`}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div className="flex flex-col items-start text-left">
+                  <span className="text-xl font-black text-[#1A2B28]">Paid Tenants</span>
+                  <span className="text-[12px] font-bold text-[#008075] mt-1">{loading ? 'Updating...' : `${counts.paid} Cleared this Month`}</span>
+                </div>
+              </button>
 
-          <button 
-            onClick={() => switchView('analytics')}
-            className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
-          >
-            <div className={`bg-[#648dcb] text-white p-4.5 rounded-2xl shadow-lg shadow-slate-900/10`}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            </div>
-            <div className="flex flex-col items-start text-left">
-              <span className="text-xl font-black text-[#1A2B28]">Rent Analytics</span>
-              <span className="text-[12px] font-bold text-[#718096] mt-1">Income Insights</span>
-            </div>
-          </button>
+              <button 
+                onClick={() => switchView('analytics')}
+                className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
+              >
+                <div className={`bg-[#648dcb] text-white p-4.5 rounded-2xl shadow-lg shadow-slate-900/10`}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                </div>
+                <div className="flex flex-col items-start text-left">
+                  <span className="text-xl font-black text-[#1A2B28]">Rent Analytics</span>
+                  <span className="text-[12px] font-bold text-[#718096] mt-1">Income Insights</span>
+                </div>
+              </button>
+            </>
+          )}
         </div>
       </main>
     </div>

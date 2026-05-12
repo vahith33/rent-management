@@ -111,8 +111,8 @@ export default function ViewAllPGs({ initialData }) {
             <thead className="bg-[#F8FAFB] text-[#718096] font-bold uppercase text-[10px] tracking-wider">
               <tr>
                 <th className="px-6 py-4">Owner Name</th>
+                <th className="px-6 py-4">Email Address</th>
                 <th className="px-6 py-4">Mobile Number</th>
-                <th className="px-6 py-4">Property Name</th>
                 <th className="px-6 py-4 text-center">Tenants</th>
                 <th className="px-6 py-4">Plan</th>
                 <th className="px-6 py-4">Reg Date</th>
@@ -122,10 +122,13 @@ export default function ViewAllPGs({ initialData }) {
             </thead>
             <tbody className="divide-y divide-slate-50 text-[#1A2B28] font-medium">
               {initialData.map((owner) => (
-                <tr key={owner.id} className="hover:bg-[#F8FAFB]/50 transition-colors">
-                  <td className="px-6 py-4 font-bold">{owner.name}</td>
+                <tr key={owner.id} className="hover:bg-[#F8FAFB]/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="font-bold">{owner.name}</div>
+                    <div className="text-[11px] text-[#718096] font-medium">{owner.property_name}</div>
+                  </td>
+                  <td className="px-6 py-4 text-[13px] text-[#718096] font-medium">{owner.email}</td>
                   <td className="px-6 py-4">{(owner.phone || '').replace(/(\d{5})(\d{5})/, '$1 $2')}</td>
-                  <td className="px-6 py-4">{owner.property_name}</td>
                   <td className="px-6 py-4 text-center font-bold">{owner.tenant_count}</td>
                   <td className="px-6 py-4">{owner.plan_rupee ? `₹${owner.plan_rupee}/mo` : <span className="text-[#ADB5BD]">Not set</span>}</td>
                   <td className="px-6 py-4 text-[#718096] text-[12px]">{new Date(owner.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric'})}</td>
@@ -161,6 +164,7 @@ export default function ViewAllPGs({ initialData }) {
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-6 text-sm">
                <div className="space-y-1"><p className="text-[12px] font-bold text-[#718096]">Owner Name</p><p className="font-bold text-[#1A2B28] text-base">{selectedOwner.name}</p></div>
+               <div className="space-y-1"><p className="text-[12px] font-bold text-[#718096]">Email Address</p><p className="font-bold text-[#1A2B28] text-base">{selectedOwner.email}</p></div>
                <div className="space-y-1"><p className="text-[12px] font-bold text-[#718096]">Mobile Number</p><p className="font-bold text-[#1A2B28] text-base">{selectedOwner.phone}</p></div>
                <div className="space-y-1"><p className="text-[12px] font-bold text-[#718096]">Property Name</p><p className="font-bold text-[#1A2B28] text-base">{selectedOwner.property_name}</p></div>
                <div className="space-y-1"><p className="text-[12px] font-bold text-[#718096]">Property Address</p><p className="font-medium text-[#1A2B28]">{selectedOwner.address || '—'}</p></div>

@@ -47,14 +47,59 @@ export async function getOwnerInfo() {
   
   const { data: owner } = await supabase
     .from('owners')
-    .select('name, phone, properties(name)')
+    .select('name, phone, email, properties(id, name)')
     .eq('id', ownerId)
     .single()
 
   return {
+    id: ownerId,
     name: owner?.name || "Owner",
     phone: owner?.phone || "",
-    pg_name: owner?.properties?.[0]?.name || "My PG"
+    email: owner?.email || "",
+    pg_name: owner?.properties?.[0]?.name || "My PG",
+    propertyId: owner?.properties?.[0]?.id
+  }
+}
+
+export async function updateOwnerProfile(data) {
+  const supabase = createServiceRoleClient()
+  
+  // Try to get owner ID. Note: If email just changed, lookup might fail by email.
+  // We'll pass the owner ID from the client if we're syncing after email change.
+  let ownerId = data.ownerId
+  if (!ownerId) {
+    ownerId = await getAuthenticatedOwnerId()
+  }
+
+  try {
+    // Build update object
+    const updateData = {}
+    if (data.name) updateData.name = data.name
+    if (data.phone) updateData.phone = data.phone
+    if (data.email) updateData.email = data.email
+
+    // 1. Update Owner Basic Info
+    const { error: ownerError } = await supabase
+      .from('owners')
+      .update(updateData)
+      .eq('id', ownerId)
+
+    if (ownerError) throw ownerError
+
+    // 2. Update Property Name if provided
+    if (data.propertyId && data.pg_name) {
+      const { error: propError } = await supabase
+        .from('properties')
+        .update({ name: data.pg_name })
+        .eq('id', data.propertyId)
+      
+      if (propError) throw propError
+    }
+
+    return { success: true }
+  } catch (err) {
+    console.error("Update failed:", err)
+    return { success: false, error: err.message }
   }
 }
 

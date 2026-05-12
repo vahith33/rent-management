@@ -115,7 +115,21 @@ export default function AddRoomPage() {
     }
   };
 
-  if (!mounted) return <div className="min-h-screen bg-white" />;
+  if (!mounted) return (
+    <div className="min-h-screen bg-white font-body">
+      <header className="px-6 py-8 space-y-2">
+        <div className="w-48 h-8 bg-slate-50 rounded animate-pulse"></div>
+        <div className="w-64 h-4 bg-slate-50 rounded animate-pulse opacity-60"></div>
+      </header>
+      <main className="px-4 space-y-10">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="space-y-4">
+            <div className="h-40 bg-[#F8FAFB] rounded-[32px] animate-pulse"></div>
+          </div>
+        ))}
+      </main>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-white font-body relative">

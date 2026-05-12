@@ -146,6 +146,7 @@ export async function deletePG(ownerId) {
 
 export async function updatePG(ownerId, formData) {
   const name = formData.get('name')
+  const email = formData.get('email')
   const property_name = formData.get('property_name')
   const address = formData.get('address')
   const plan_rupee_str = formData.get('plan_rupee')
@@ -158,8 +159,21 @@ export async function updatePG(ownerId, formData) {
 
   const supabase = createServiceRoleClient()
   
+  // 1. Get current owner to find supabase_user_id
+  const { data: owner } = await supabase.from('owners').select('supabase_user_id, email').eq('id', ownerId).single()
+  
+  // 2. Update Auth Email if changed
+  if (email && email !== owner.email && owner.supabase_user_id) {
+    const { error: authError } = await supabase.auth.admin.updateUserById(owner.supabase_user_id, {
+      email: email
+    })
+    if (authError) return { error: authError.message }
+  }
+
+  // 3. Update Database
   await supabase.from('owners').update({
     name,
+    email,
     plan_rupee,
     admin_notes
   }).eq('id', ownerId)

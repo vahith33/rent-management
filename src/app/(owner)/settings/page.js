@@ -9,11 +9,5 @@ export default async function SettingsPage() {
     redirect('/login')
   }
 
-  // Add a placeholder email since it's not in the DB yet
-  const data = {
-    ...ownerInfo,
-    email: ownerInfo.email || `${ownerInfo.name.toLowerCase().replace(' ', '.')}@stayease.com`
-  }
-
-  return <SettingsClient initialData={data} />;
+  return <SettingsClient initialData={ownerInfo} />;
 }
