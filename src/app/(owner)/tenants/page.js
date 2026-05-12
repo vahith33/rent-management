@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { getTenants, removeTenant } from '@/actions/owner';
@@ -8,45 +8,60 @@ import { getTenants, removeTenant } from '@/actions/owner';
 export default function TenantsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [mounted, setMounted] = useState(false);
-  const [view, setView] = useState("menu"); // "menu", "list", "detail"
+  const [view, setView] = useState(() => searchParams.get('view') || "menu");
   const [selectedTenant, setSelectedTenant] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
+  const hasFetchedRef = useRef(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const data = await getTenants();
-      setTenants(data);
-      setLoading(false);
-      setMounted(true);
-    };
-
-    fetchData();
+  // Fetch tenants only when needed (list or detail view)
+  const fetchTenantsIfNeeded = useCallback(async () => {
+    if (hasFetchedRef.current) return tenants;
+    setLoading(true);
+    const data = await getTenants();
+    setTenants(data);
+    setLoading(false);
+    hasFetchedRef.current = true;
+    return data;
   }, []);
 
+  // Sync URL → view and handle detail selection
   useEffect(() => {
-    if (!mounted) return;
-    
     const v = searchParams.get('view');
     const id = searchParams.get('id');
-    
+
     if (v === 'list') {
       setView('list');
+      fetchTenantsIfNeeded();
     } else if (v === 'detail' && id) {
-      const tenant = tenants.find(t => t.id === id || t.id === parseInt(id));
-      if (tenant) {
-        setSelectedTenant(tenant);
-        setView('detail');
-      }
+      fetchTenantsIfNeeded().then(data => {
+        const tenant = data.find(t => t.id === id || t.id === parseInt(id));
+        if (tenant) {
+          setSelectedTenant(tenant);
+          setView('detail');
+        }
+      });
     } else {
       setView('menu');
+      setLoading(false);
     }
-  }, [searchParams, mounted, tenants]);
+  }, [searchParams]);
 
-  if (!mounted) return <div className="min-h-screen bg-white" />;
+  // Instant view switcher — no router.push overhead
+  const switchView = useCallback((newView, params = '') => {
+    const url = params ? `/tenants?view=${newView}&${params}` : (newView === 'menu' ? '/tenants' : `/tenants?view=${newView}`);
+    window.history.pushState(null, '', url);
+
+    if (newView === 'list' || newView === 'detail') {
+      fetchTenantsIfNeeded();
+    }
+
+    startTransition(() => {
+      setView(newView);
+    });
+  }, [fetchTenantsIfNeeded]);
 
   const handleRemove = async () => {
     if (!confirm(`Are you sure you want to remove ${selectedTenant.name}?`)) return;
@@ -229,7 +244,7 @@ export default function TenantsPage() {
                       <div key={tenant.id} className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm space-y-4 group hover:border-[#008075]/30 transition-all active:scale-[0.99]">
                          <div className="flex items-center justify-between">
                             <button 
-                               onClick={() => router.push(`?view=detail&id=${tenant.id}`)}
+                               onClick={() => { setSelectedTenant(tenant); switchView('detail', `id=${tenant.id}`); }}
                                className="flex items-center gap-4 text-left"
                             >
                                <div className="w-11 h-11 bg-[#00685F] text-white rounded-2xl flex items-center justify-center shadow-sm">
@@ -310,7 +325,7 @@ export default function TenantsPage() {
           </button>
 
           <button 
-            onClick={() => router.push('?view=list')}
+            onClick={() => switchView('list')}
             className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
           >
             <div className={`bg-[#00685F] text-white p-4.5 rounded-2xl shadow-lg shadow-[#00685F]/10`}>

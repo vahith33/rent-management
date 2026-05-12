@@ -1,16 +1,13 @@
 "use client";
 
-import { useRouter, usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
+// Using <Link> instead of router.push() for instant client-side navigation.
+// Link pre-fetches the page in the background, so tapping a nav item
+// shows the new page almost instantly instead of waiting for a full navigation cycle.
 export default function BottomNav() {
-  const router = useRouter();
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const navItems = [
     { 
@@ -35,16 +32,15 @@ export default function BottomNav() {
     },
   ];
 
-  if (!mounted) return null;
-
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-100 px-23 py-3 flex justify-between items-center z-50 safe-bottom">
       {navItems.map((item, i) => {
         const isActive = pathname.startsWith(item.path);
         return (
-          <div 
+          <Link 
             key={i} 
-            onClick={() => router.push(item.path)} 
+            href={item.path}
+            prefetch={true}
             className="flex flex-col items-center gap-0.5 cursor-pointer transition-all duration-300 relative group active:scale-90"
           >
             {/* Active Highlight (Shadow) */}
@@ -60,7 +56,7 @@ export default function BottomNav() {
             <span className={`text-[10.5px] font-semibold tracking-tight transition-colors ${isActive ? 'text-[#00685F]' : 'text-[#94A3B8] opacity-60'}`}>
               {item.label}
             </span>
-          </div>
+          </Link>
         );
       })}
     </nav>

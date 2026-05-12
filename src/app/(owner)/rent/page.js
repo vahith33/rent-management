@@ -1,40 +1,74 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getRentPayments, updateRentPayment, getRentAnalytics, getRentCounts } from '@/actions/owner';
 
 export default function RentManagementPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [view, setView] = useState("menu"); // "menu", "paid", "unpaid", "analytics"
-  const [loading, setLoading] = useState(false);
+  const [view, setView] = useState(() => searchParams.get('view') || "menu");
+  const [isPending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(true); // Start TRUE — show skeleton immediately
   const [tenants, setTenants] = useState([]);
   const [counts, setCounts] = useState({ paid: 0, unpaid: 0 });
   const [analyticsData, setAnalyticsData] = useState(null);
 
+  // Cache for previously loaded data — switching back to a view is instant
+  const cache = useRef({ paid: null, unpaid: null, analytics: null, counts: null });
+
+  // Sync URL → view (only when URL changes externally, e.g. browser back button)
   useEffect(() => {
     const v = searchParams.get('view');
-    if (v) setView(v);
-    else setView("menu");
+    if (v && v !== view) setView(v);
+    else if (!v && view !== "menu") setView("menu");
   }, [searchParams]);
 
+  // Fast view switcher — updates state instantly, fetches in background
+  const switchView = useCallback((newView) => {
+    // Update URL without full page navigation
+    const url = newView === 'menu' ? '/rent' : `/rent?view=${newView}`;
+    window.history.pushState(null, '', url);
+
+    // If we have cached data, show it instantly while refreshing
+    if (newView === 'paid' && cache.current.paid) setTenants(cache.current.paid);
+    if (newView === 'unpaid' && cache.current.unpaid) setTenants(cache.current.unpaid);
+    if (newView === 'analytics' && cache.current.analytics) setAnalyticsData(cache.current.analytics);
+    if (newView === 'menu' && cache.current.counts) setCounts(cache.current.counts);
+
+    startTransition(() => {
+      setView(newView);
+    });
+  }, []);
+
+  // Data fetching — runs when view changes
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       setLoading(true);
       if (view === 'paid' || view === 'unpaid') {
         const data = await getRentPayments(view === 'paid' ? 'PAID' : 'UNPAID');
-        setTenants(data);
+        if (!cancelled) {
+          setTenants(data);
+          cache.current[view] = data;
+        }
       } else if (view === 'menu') {
         const data = await getRentCounts();
-        setCounts(data);
+        if (!cancelled) {
+          setCounts(data);
+          cache.current.counts = data;
+        }
       } else if (view === 'analytics') {
         const data = await getRentAnalytics();
-        setAnalyticsData(data);
+        if (!cancelled) {
+          setAnalyticsData(data);
+          cache.current.analytics = data;
+        }
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
     fetchData();
+    return () => { cancelled = true; };
   }, [view]);
 
   const [showConfirm, setShowConfirm] = useState(false);
@@ -315,7 +349,7 @@ export default function RentManagementPage() {
 
         <div className="grid gap-5">
           <button 
-            onClick={() => router.push('?view=unpaid')}
+            onClick={() => switchView('unpaid')}
             className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
           >
             <div className={`bg-red-500 text-white p-4.5 rounded-2xl shadow-lg shadow-red-900/10`}>
@@ -328,7 +362,7 @@ export default function RentManagementPage() {
           </button>
 
           <button 
-            onClick={() => router.push('?view=paid')}
+            onClick={() => switchView('paid')}
             className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
           >
             <div className={`bg-[#008075] text-white p-4.5 rounded-2xl shadow-lg shadow-teal-900/10`}>
@@ -341,7 +375,7 @@ export default function RentManagementPage() {
           </button>
 
           <button 
-            onClick={() => router.push('?view=analytics')}
+            onClick={() => switchView('analytics')}
             className="w-full bg-white p-7 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 hover:shadow-xl transition-all group active:scale-[0.98]"
           >
             <div className={`bg-[#648dcb] text-white p-4.5 rounded-2xl shadow-lg shadow-slate-900/10`}>
