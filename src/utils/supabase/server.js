@@ -1,6 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+// Server-side client using @supabase/ssr.
+// NOTE: This CANNOT be a singleton — each request needs its own cookie context.
+// The cookies() call is unique per request in the App Router, so a fresh client
+// is required each time. This is the correct Supabase pattern for server usage.
 export async function createClient() {
   const cookieStore = await cookies()
 

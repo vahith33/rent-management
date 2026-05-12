@@ -41,5 +41,5 @@ export async function classifyUser() {
   }
 
   // 4. Fallback for new users or unrecognized emails
-  redirect('/welcome-owner')
+  redirect('/dashboard')
 }

@@ -27,8 +27,29 @@ export async function updateSession(request) {
     }
   )
 
-  // refreshing the auth token
-  await supabase.auth.getUser()
+  // IMPORTANT: Do NOT use getSession() here — it reads from the cookie
+  // without verifying with the Supabase Auth server, which is a security risk.
+  // getUser() contacts the server and is the only safe way to validate.
+  //
+  // Performance note: This call happens on EVERY request but it does NOT
+  // block page rendering — middleware runs at the edge before the page loads.
+  // The ~50ms overhead is worth it to keep the auth session fresh.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Optional: redirect unauthenticated users away from protected routes
+  if (
+    !user &&
+    !request.nextUrl.pathname.startsWith('/login') &&
+    !request.nextUrl.pathname.startsWith('/otp-verify') &&
+    !request.nextUrl.pathname.startsWith('/auth') &&
+    request.nextUrl.pathname !== '/'
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
 
   return supabaseResponse
 }

@@ -1,29 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-
-export async function createClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        async getAll() {
-          const cookieStore = await cookies()
-          return cookieStore.getAll()
-        },
-        async setAll(cookiesToSet) {
-          const cookieStore = await cookies()
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-          }
-        },
-      },
-    }
-  )
-}
+// Re-export from the canonical location to avoid having two identical files.
+// All server-side Supabase auth usage should import from '@/utils/supabase/server'.
+// This file exists only for backwards compatibility with imports using '@/lib/supabase/server'.
+export { createClient } from '@/utils/supabase/server'
