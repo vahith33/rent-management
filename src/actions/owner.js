@@ -1,25 +1,39 @@
 'use server'
 
+import { cache } from 'react'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { unstable_cache, revalidateTag } from 'next/cache'
 import { createServiceRoleClient } from '@/lib/supabase/service'
 
-async function getAuthenticatedOwnerId() {
+// Cache the authentication lookup for the duration of a single request.
+// This prevents multiple getUser() calls when multiple actions are triggered.
+export const getAuthenticatedOwnerId = cache(async function getAuthenticatedOwnerId() {
   const supabase = await createClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
   
-  // Create a service role client for the database lookup to bypass RLS
+  // 1. Get user from Auth session
+  const { data: { user } } = await supabase.auth.getUser()
   const adminSupabase = createServiceRoleClient()
 
-  // If we have a real authenticated user
-  if (user?.email) {
-    const { data: ownerData, error: lookupError } = await adminSupabase
+  if (user?.id) {
+    // Optimization: Check if owner exists by ID directly (much faster than email search)
+    const { data: ownerData } = await adminSupabase
       .from('owners')
       .select('id')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single()
       
-    if (!lookupError && ownerData) return ownerData.id
+    if (ownerData) return ownerData.id
+    
+    // Fallback: search by email if ID doesn't match (for older accounts)
+    if (user.email) {
+      const { data: byEmail } = await adminSupabase
+        .from('owners')
+        .select('id')
+        .eq('email', user.email)
+        .single()
+      if (byEmail) return byEmail.id
+    }
   }
 
   // Fallback for mock/dev sessions
@@ -39,26 +53,34 @@ async function getAuthenticatedOwnerId() {
   // Final fallback for local development (only if above fails)
   console.warn('Authentication/Owner lookup failed, using dev fallback ID')
   return 'e3bdf815-ffc0-4a7c-aa35-fa9647fa7d4e' 
-}
+})
 
 export async function getOwnerInfo() {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
   
-  const { data: owner } = await supabase
-    .from('owners')
-    .select('name, phone, email, properties(id, name)')
-    .eq('id', ownerId)
-    .single()
+  const fetchOwnerInfo = unstable_cache(
+    async (id) => {
+      const supabase = createServiceRoleClient()
+      const { data: owner } = await supabase
+        .from('owners')
+        .select('name, phone, email, properties(id, name)')
+        .eq('id', id)
+        .single()
 
-  return {
-    id: ownerId,
-    name: owner?.name || "Owner",
-    phone: owner?.phone || "",
-    email: owner?.email || "",
-    pg_name: owner?.properties?.[0]?.name || "My PG",
-    propertyId: owner?.properties?.[0]?.id
-  }
+      return {
+        id,
+        name: owner?.name || "Owner",
+        phone: owner?.phone || "",
+        email: owner?.email || "",
+        pg_name: owner?.properties?.[0]?.name || "My PG",
+        propertyId: owner?.properties?.[0]?.id
+      }
+    },
+    ['owner-info', ownerId],
+    { tags: ['owner', `owner-${ownerId}`], revalidate: 300 }
+  )
+
+  return fetchOwnerInfo(ownerId)
 }
 
 export async function updateOwnerProfile(data) {
@@ -96,6 +118,9 @@ export async function updateOwnerProfile(data) {
       if (propError) throw propError
     }
 
+    revalidateTag('owner')
+    revalidateTag('dashboard')
+
     return { success: true }
   } catch (err) {
     console.error("Update failed:", err)
@@ -105,81 +130,87 @@ export async function updateOwnerProfile(data) {
 
 export async function getOwnerDashboardData() {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
-
-  // 1. Fetch Owner and Active Tenants first
-  const [ownerRes, tenantsListRes] = await Promise.all([
-    supabase.from('owners').select('name, phone, properties(id, name)').eq('id', ownerId).single(),
-    supabase.from('tenants').select('id').eq('owner_id', ownerId).eq('status', 'ACTIVE')
-  ])
-
-  const owner = ownerRes.data
-  const propertyIds = owner?.properties?.map(p => p.id) || []
-  const pg_name = owner?.properties?.[0]?.name || "My PG"
-  const activeTenantIds = tenantsListRes.data?.map(t => t.id) || []
-
-  if (propertyIds.length === 0) {
-    return {
-      owner: { name: owner?.name, phone: owner?.phone, pg_name },
-      stats: { totalTenants: 0, vacantBeds: 0, pendingRentCount: 0, monthlyIncome: "0", occupancyRate: 0 },
-      recentRent: []
-    }
-  }
-
-  // 2. Fetch all other data in parallel
-  const currentMonthStart = new Date()
-  currentMonthStart.setDate(1)
-  currentMonthStart.setHours(0,0,0,0)
-
-  const [roomsRes, rentRes, incomeRes] = await Promise.all([
-    // Room Stats
-    supabase.from('rooms').select('id, capacity, tenant_assignments(id, status)').in('property_id', propertyIds),
-    
-    // Recent Rent (filtered by active tenants)
-    supabase.from('rent_payments')
-      .select('id, amount, status, due_date, tenants(name, phone)')
-      .in('tenant_id', activeTenantIds)
-      .order('due_date', { ascending: false })
-      .limit(10),
-
-    // Monthly Income
-    supabase.from('rent_records')
-      .select('amount')
-      .eq('status', 'PAID')
-      .gte('paid_at', currentMonthStart.toISOString())
-      .in('tenant_id', activeTenantIds)
-  ])
-
-  // 3. Process the results
-  let totalBeds = 0
-  let occupiedBeds = 0
-  if (roomsRes.data) {
-    roomsRes.data.forEach(room => {
-      totalBeds += room.capacity
-      occupiedBeds += room.tenant_assignments?.filter(ta => 
-        String(ta.status).toUpperCase() === 'ACTIVE'
-      ).length || 0
-    })
-  }
-
-  const monthlyIncome = incomeRes.data?.reduce((sum, record) => sum + (record.amount || 0), 0) || 0
-  const pendingRentCount = rentRes.data?.filter(r => r.status === 'UNPAID').length || 0
   
-  return {
-    owner: {
-      name: owner?.name,
-      phone: owner?.phone,
-      pg_name: pg_name
+  const fetchData = unstable_cache(
+    async (id) => {
+      const supabase = createServiceRoleClient()
+
+      // 1. Fetch Owner and Active Tenants first
+      const [ownerRes, tenantsListRes] = await Promise.all([
+        supabase.from('owners').select('name, phone, properties(id, name)').eq('id', id).single(),
+        supabase.from('tenants').select('id').eq('owner_id', id).eq('status', 'ACTIVE')
+      ])
+
+      const owner = ownerRes.data
+      const propertyIds = owner?.properties?.map(p => p.id) || []
+      const pg_name = owner?.properties?.[0]?.name || "My PG"
+      const activeTenantIds = tenantsListRes.data?.map(t => t.id) || []
+
+      if (propertyIds.length === 0) {
+        return {
+          owner: { name: owner?.name, phone: owner?.phone, pg_name },
+          stats: { totalTenants: 0, vacantBeds: 0, pendingRentCount: 0, monthlyIncome: "0", occupancyRate: 0 },
+          recentRent: []
+        }
+      }
+
+      // 2. Fetch all other data in parallel
+      const currentMonthStart = new Date()
+      currentMonthStart.setDate(1)
+      currentMonthStart.setHours(0,0,0,0)
+
+      const [roomsRes, rentRes, incomeRes] = await Promise.all([
+        supabase.from('rooms').select('id, capacity, tenant_assignments(id, status)').in('property_id', propertyIds),
+        supabase.from('rent_payments')
+          .select('id, amount, status, due_date, tenants(name, phone, rent)')
+          .in('tenant_id', activeTenantIds)
+          .order('due_date', { ascending: false })
+          .limit(10),
+        supabase.from('rent_records')
+          .select('amount, eb_charges')
+          .eq('status', 'PAID')
+          .gte('paid_at', currentMonthStart.toISOString())
+          .in('tenant_id', activeTenantIds)
+      ])
+
+      // 3. Process the results
+      let totalBeds = 0
+      let occupiedBeds = 0
+      if (roomsRes.data) {
+        roomsRes.data.forEach(room => {
+          totalBeds += room.capacity
+          occupiedBeds += room.tenant_assignments?.filter(ta => 
+            String(ta.status).toUpperCase() === 'ACTIVE'
+          ).length || 0
+        })
+      }
+
+      const monthlyIncome = incomeRes.data?.reduce((sum, record) => sum + (record.amount || 0), 0) || 0
+      const totalEB = incomeRes.data?.reduce((sum, record) => sum + (record.eb_charges || 0), 0) || 0
+      const pendingRentCount = rentRes.data?.filter(r => r.status === 'UNPAID').length || 0
+      
+      return {
+        owner: {
+          name: owner?.name,
+          phone: owner?.phone,
+          pg_name: pg_name
+        },
+        stats: {
+          totalTenants: activeTenantIds.length,
+          vacantBeds: totalBeds - occupiedBeds,
+          pendingRentCount,
+          monthlyIncome: monthlyIncome.toLocaleString('en-IN'),
+          ebCollected: totalEB.toLocaleString('en-IN'),
+          occupancyRate: totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0
+        },
+        recentRent: rentRes.data || []
+      }
     },
-    stats: {
-      totalTenants: activeTenantIds.length,
-      vacantBeds: totalBeds - occupiedBeds,
-      pendingRentCount,
-      monthlyIncome: monthlyIncome.toLocaleString('en-IN'),
-      occupancyRate: totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0
-    },
-    recentRent: rentRes.data || []
-  }
+    ['owner-dashboard', ownerId],
+    { tags: ['dashboard', `dashboard-${ownerId}`], revalidate: 60 }
+  )
+
+  return fetchData(ownerId)
 }
 
 export async function createTenant(tenantData) {
@@ -252,51 +283,65 @@ export async function createTenant(tenantData) {
       }])
   }
 
+  revalidateTag('tenants')
+  revalidateTag('dashboard')
+  revalidateTag('rooms')
+  revalidateTag('rent')
+
   return { success: true, data: tenant }
 }
 
 export async function getTenants() {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
   
-  const { data, error } = await supabase
-    .from('tenants')
-    .select(`
-      *,
-      tenant_assignments(
-        status,
-        room_id,
-        bed_index,
-        rooms(room_number)
-      )
-    `)
-    .eq('owner_id', ownerId)
-    .order('created_at', { ascending: false })
+  const fetchTenants = unstable_cache(
+    async (id) => {
+      const supabase = createServiceRoleClient()
+      const { data, error } = await supabase
+        .from('tenants')
+        .select(`
+          *,
+          tenant_assignments(
+            status,
+            room_id,
+            bed_index,
+            rooms(room_number)
+          ),
+          rent_records(
+             amount,
+             eb_charges
+          )
+        `)
+        .eq('owner_id', id)
+        .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching tenants:', error)
-    return []
-  }
+      if (error) {
+        console.error('Error fetching tenants:', error)
+        return []
+      }
 
-  // Flatten and normalize data for the UI
-  const formattedData = data?.map(tenant => {
-    // Get the active assignment
-    const activeAssignment = tenant.tenant_assignments?.find(ta => ta.status === 'ACTIVE') || tenant.tenant_assignments?.[0];
-    const roomNumber = activeAssignment?.rooms?.room_number;
+      return data?.map(tenant => {
+        const activeAssignment = tenant.tenant_assignments?.find(ta => ta.status === 'ACTIVE') || tenant.tenant_assignments?.[0];
+        const roomNumber = activeAssignment?.rooms?.room_number;
 
-    return {
-      ...tenant,
-      room: roomNumber ? `Room ${roomNumber}` : "Unassigned",
-      initials: tenant.name?.substring(0, 1).toUpperCase() || "?",
-      rent: tenant.rent ? `₹${Number(tenant.rent).toLocaleString('en-IN')}` : "₹0",
-      deposit: tenant.deposit ? `₹${Number(tenant.deposit).toLocaleString('en-IN')}` : "₹0",
-      moveIn: tenant.move_in_date ? new Date(tenant.move_in_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : "N/A",
-      period: tenant.agreement_period || "N/A",
-      govId: tenant.id_type || "N/A"
-    }
-  })
+        return {
+          ...tenant,
+          room: roomNumber ? `Room ${roomNumber}` : "Unassigned",
+          initials: tenant.name?.substring(0, 1).toUpperCase() || "?",
+          rent: tenant.rent ? `₹${Number(tenant.rent).toLocaleString('en-IN')}` : "₹0",
+          deposit: tenant.deposit ? `₹${Number(tenant.deposit).toLocaleString('en-IN')}` : "₹0",
+          moveIn: tenant.move_in_date ? new Date(tenant.move_in_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : "N/A",
+          period: tenant.agreement_period || "N/A",
+          govId: tenant.id_type || "N/A",
+          totalEB: tenant.rent_records?.reduce((sum, r) => sum + (Number(r.eb_charges) || 0), 0) || 0
+        }
+      }) || []
+    },
+    ['tenants', ownerId],
+    { tags: ['tenants', `tenants-${ownerId}`], revalidate: 60 }
+  )
 
-  return formattedData || []
+  return fetchTenants(ownerId)
 }
 
 export async function updateTenant(tenantId, tenantData) {
@@ -318,6 +363,15 @@ export async function updateTenant(tenantId, tenantData) {
   if (tenantError) {
     console.error('Error updating tenant:', tenantError)
     return { success: false, error: tenantError.message }
+  }
+
+  // 1.5 Update unpaid rent payments if rent amount changed
+  if (profileData.rent) {
+    await supabase
+      .from('rent_payments')
+      .update({ amount: profileData.rent })
+      .eq('tenant_id', tenantId)
+      .eq('status', 'UNPAID')
   }
 
   // 2. Handle room assignment updates if changed
@@ -355,6 +409,11 @@ export async function updateTenant(tenantId, tenantData) {
     }
   }
 
+  revalidateTag('tenants')
+  revalidateTag('dashboard')
+  revalidateTag('rooms')
+  revalidateTag('rent')
+
   return { success: true }
 }
 
@@ -378,6 +437,11 @@ export async function removeTenant(tenantId) {
     console.error('Error removing tenant:', error)
     return { success: false, error: error.message }
   }
+
+  revalidateTag('tenants')
+  revalidateTag('dashboard')
+  revalidateTag('rooms')
+  revalidateTag('rent')
 
   return { success: true }
 }
@@ -413,67 +477,70 @@ export async function createRoom(roomData) {
     return { success: false, error: error.message }
   }
 
+  revalidateTag('rooms')
+  revalidateTag('dashboard')
+
   return { success: true, data }
 }
 
 export async function getRooms() {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
   
-  // 1. Fetch Owner's property first
-  const { data: owner } = await supabase
-    .from('owners')
-    .select('properties(id)')
-    .eq('id', ownerId)
-    .single()
-    
-  const propertyId = owner?.properties?.[0]?.id
-  if (!propertyId) return []
+  const fetchRooms = unstable_cache(
+    async (id) => {
+      const supabase = createServiceRoleClient()
+      
+      const { data, error } = await supabase
+        .from('rooms')
+        .select(`
+          *,
+          properties!inner(owner_id),
+          tenant_assignments(id, status, bed_index)
+        `)
+        .eq('properties.owner_id', id)
+        .order('room_number', { ascending: true })
 
-  // 2. Fetch all rooms for this property
-  const { data, error } = await supabase
-    .from('rooms')
-    .select('*, tenant_assignments(id, status, bed_index)')
-    .eq('property_id', propertyId)
-    .order('room_number', { ascending: true })
+      if (error) {
+        console.error('Error fetching rooms:', error)
+        return []
+      }
 
-  if (error) {
-    console.error('Error fetching rooms:', error)
-    return []
-  }
+      return data?.map(room => {
+        const activeTenants = room.tenant_assignments?.filter(ta => 
+          String(ta.status).toUpperCase() === 'ACTIVE'
+        ).length || 0
+        const available = room.capacity - activeTenants
+        
+        let status = "VACANT"
+        if (activeTenants > 0) {
+          status = activeTenants >= room.capacity ? "OCCUPIED" : "PARTIAL"
+        }
 
-  // 3. Format data for UI
-  const formattedRooms = data.map(room => {
-    const activeTenants = room.tenant_assignments?.filter(ta => 
-      String(ta.status).toUpperCase() === 'ACTIVE'
-    ).length || 0
-    const available = room.capacity - activeTenants
-    
-    let status = "VACANT"
-    if (activeTenants > 0) {
-      status = activeTenants >= room.capacity ? "OCCUPIED" : "PARTIAL"
-    }
+        return {
+          id: room.id,
+          name: `Room ${room.room_number}`,
+          room_number: room.room_number,
+          building: room.building_number || "Main",
+          floor:  room.floor,
+          status,
+          price: `₹${Number(room.rent_per_bed).toLocaleString('en-IN')}`,
+          rawPrice: room.rent_per_bed,
+          type: `${room.sharing_type} - ${room.room_type}`,
+          sharing_type: room.sharing_type,
+          beds: room.capacity,
+          available,
+          assignments: room.tenant_assignments || [],
+          amenities: room.amenities || [],
+          image_url: room.image_url,
+          desc: room.description || `Spacious ${room.sharing_type} room located in Building ${room.building_number || 'Main'} on the ${room.floor}.`
+        }
+      }) || []
+    },
+    ['rooms', ownerId],
+    { tags: ['rooms', `rooms-${ownerId}`], revalidate: 60 }
+  )
 
-    return {
-      id: room.id,
-      name: `Room ${room.room_number}`,
-      room_number: room.room_number,
-      building: room.building_number || "Main",
-      floor: room.floor,
-      status,
-      price: `₹${Number(room.rent_per_bed).toLocaleString('en-IN')}`,
-      rawPrice: room.rent_per_bed,
-      type: `${room.sharing_type} - ${room.room_type}`,
-      sharing_type: room.sharing_type,
-      beds: room.capacity,
-      available,
-      assignments: room.tenant_assignments || [],
-      amenities: room.amenities || [],
-      desc: room.description || `Spacious ${room.sharing_type} room located in Building ${room.building_number || 'Main'} on the ${room.floor}.`
-    }
-  })
-
-  return formattedRooms
+  return fetchRooms(ownerId)
 }
 
 export async function removeRoom(roomId) {
@@ -489,6 +556,9 @@ export async function removeRoom(roomId) {
     console.error('Error removing room:', error)
     return { success: false, error: error.message }
   }
+
+  revalidateTag('rooms')
+  revalidateTag('dashboard')
 
   return { success: true }
 }
@@ -512,6 +582,9 @@ export async function updateRoom(roomId, roomData) {
     console.error('Error updating room:', error)
     return { success: false, error: error.message }
   }
+
+  revalidateTag('rooms')
+  revalidateTag('dashboard')
 
   return { success: true, data }
 }
@@ -560,56 +633,87 @@ export async function uploadRoomPhoto(formData) {
 
 export async function getRentPayments(status) {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
   
-  // First get all tenants for this owner to filter payments
-  const { data: tenants } = await supabase
-    .from('tenants')
-    .select('id')
-    .eq('owner_id', ownerId)
-    
-  const tenantIds = tenants?.map(t => t.id) || []
-  if (tenantIds.length === 0) return []
+  const fetchPayments = unstable_cache(
+    async (id, pStatus) => {
+      const supabase = createServiceRoleClient()
+      
+      const { data: tenants } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('owner_id', id)
+        
+      const tenantIds = tenants?.map(t => t.id) || []
+      if (tenantIds.length === 0) return []
 
-  const { data, error } = await supabase
-    .from('rent_payments')
-    .select(`
-      *,
-      tenants(
-        id,
-        name,
-        tenant_assignments(
-          status,
-          rooms(room_number)
-        )
-      )
-    `)
-    .in('tenant_id', tenantIds)
-    .eq('status', status)
-    .order('due_date', { ascending: status === 'UNPAID' })
+      const { data, error } = await supabase
+        .from('rent_payments')
+        .select(`
+          *,
+          tenants(
+            id,
+            name,
+            rent,
+            tenant_assignments(
+              status,
+              rooms(room_number)
+            )
+          )
+        `)
+        .in('tenant_id', tenantIds)
+        .eq('status', pStatus)
+        .order('due_date', { ascending: pStatus === 'UNPAID' })
 
-  if (error) {
-    console.error('Error fetching rent payments:', error)
-    return []
-  }
+      if (error) {
+        console.error('Error fetching rent payments:', error)
+        return []
+      }
 
-  return data.map(p => {
-    const activeAssignment = p.tenants?.tenant_assignments?.find(ta => ta.status === 'ACTIVE') || p.tenants?.tenant_assignments?.[0];
-    const roomNum = activeAssignment?.rooms?.room_number;
+      // Fetch all PAID payments for these tenants to check for already paid EB
+      const { data: allPaid } = await supabase
+        .from('rent_payments')
+        .select('tenant_id, eb_charges, due_date')
+        .in('tenant_id', tenantIds)
+        .eq('status', 'PAID')
 
-    return {
-      id: p.id,
-      tenantId: p.tenants?.id,
-      name: p.tenants?.name || 'Unknown',
-      room: roomNum ? `Room ${roomNum}` : 'Unassigned',
-      rent: `₹${Number(p.amount).toLocaleString('en-IN')}`,
-      rawRent: p.amount,
-      status: p.status,
-      date: p.due_date,
-      displayDate: p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : p.due_date,
-      mode: p.payment_mode
-    }
-  })
+      return data.map(p => {
+        const activeAssignment = p.tenants?.tenant_assignments?.find(ta => ta.status === 'ACTIVE') || p.tenants?.tenant_assignments?.[0];
+        const roomNum = activeAssignment?.rooms?.room_number;
+        
+        // Find if this tenant already paid EB for the same month/year as this due_date
+        const pDate = new Date(p.due_date);
+        const alreadyPaidEB = allPaid
+          ?.filter(ap => {
+            const apDate = new Date(ap.due_date);
+            return ap.tenant_id === p.tenant_id && 
+                   apDate.getMonth() === pDate.getMonth() && 
+                   apDate.getFullYear() === pDate.getFullYear();
+          })
+          .reduce((sum, ap) => sum + (Number(ap.eb_charges) || 0), 0) || 0;
+
+        return {
+          id: p.id,
+          tenantId: p.tenants?.id,
+          name: p.tenants?.name || 'Unknown',
+          room: roomNum ? `Room ${roomNum}` : 'Unassigned',
+          rent: `₹${Number(p.amount).toLocaleString('en-IN')}`,
+          rawRent: p.amount,
+          status: p.status,
+          date: p.due_date,
+          paidAt: p.paid_at,
+          displayDate: p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : p.due_date,
+          mode: p.payment_mode,
+          ebCharges: p.eb_charges || 0,
+          totalEbPaid: alreadyPaidEB,
+          baseRent: p.tenants?.rent || 0
+        }
+      })
+    },
+    ['rent-payments', ownerId, status],
+    { tags: ['rent', `rent-${ownerId}`], revalidate: 60 }
+  )
+
+  return fetchPayments(ownerId, status)
 }
 
 // Fast count-only query for the rent menu page.
@@ -617,43 +721,86 @@ export async function getRentPayments(status) {
 // this does 1 auth lookup + 1 tenant query + 2 lightweight count queries in parallel.
 export async function getRentCounts() {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
+  
+  const fetchCounts = unstable_cache(
+    async (id) => {
+      const supabase = createServiceRoleClient()
 
-  const { data: tenants } = await supabase
-    .from('tenants')
-    .select('id')
-    .eq('owner_id', ownerId)
+      const { data: tenants } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('owner_id', id)
 
-  const tenantIds = tenants?.map(t => t.id) || []
-  if (tenantIds.length === 0) return { paid: 0, unpaid: 0 }
+      const tenantIds = tenants?.map(t => t.id) || []
+      if (tenantIds.length === 0) return { paid: 0, unpaid: 0 }
 
-  // Use count queries — these return a number, NOT all rows
-  const [paidRes, unpaidRes] = await Promise.all([
-    supabase
-      .from('rent_payments')
-      .select('id', { count: 'exact', head: true })
-      .in('tenant_id', tenantIds)
-      .eq('status', 'PAID'),
-    supabase
-      .from('rent_payments')
-      .select('id', { count: 'exact', head: true })
-      .in('tenant_id', tenantIds)
-      .eq('status', 'UNPAID')
-  ])
+      const [paidRes, unpaidRes] = await Promise.all([
+        supabase
+          .from('rent_payments')
+          .select('id', { count: 'exact', head: true })
+          .in('tenant_id', tenantIds)
+          .eq('status', 'PAID'),
+        supabase
+          .from('rent_payments')
+          .select('id', { count: 'exact', head: true })
+          .in('tenant_id', tenantIds)
+          .eq('status', 'UNPAID')
+      ])
 
-  return {
-    paid: paidRes.count || 0,
-    unpaid: unpaidRes.count || 0
-  }
+      return {
+        paid: paidRes.count || 0,
+        unpaid: unpaidRes.count || 0
+      }
+    },
+    ['rent-counts', ownerId],
+    { tags: ['rent', `rent-${ownerId}`], revalidate: 60 }
+  )
+
+  return fetchCounts(ownerId)
 }
 
 export async function updateRentPayment(paymentId, details) {
   const supabase = createServiceRoleClient()
   
+  // 1. Fetch existing payment to check for partial payment
+  const { data: existing, error: fetchError } = await supabase
+    .from('rent_payments')
+    .select('*')
+    .eq('id', paymentId)
+    .single()
+
+  if (fetchError) {
+    console.error('Error fetching rent payment:', fetchError)
+    return { success: false, error: fetchError.message }
+  }
+
+  // Handle Partial Payment: If paying less than owed and marking as PAID
+  if (details.status === 'PAID' && existing.status === 'UNPAID' && details.amount < existing.amount) {
+    const remainingBalance = existing.amount - details.amount;
+    
+    // Create new UNPAID record for the balance
+    const { error: splitError } = await supabase
+      .from('rent_payments')
+      .insert([{
+        tenant_id: existing.tenant_id,
+        amount: remainingBalance,
+        status: 'UNPAID',
+        due_date: existing.due_date,
+        created_at: new Date().toISOString()
+      }])
+
+    if (splitError) {
+      console.error('Error creating partial payment balance:', splitError)
+      return { success: false, error: "Failed to create balance record for partial payment." }
+    }
+  }
+
+  // 2. Update the current record
   const { data, error } = await supabase
     .from('rent_payments')
     .update({
       amount: details.amount,
+      eb_charges: details.ebCharges || 0,
       status: details.status || 'PAID',
       payment_mode: details.paymentMode,
       paid_at: details.paidAt || new Date().toISOString(),
@@ -668,75 +815,98 @@ export async function updateRentPayment(paymentId, details) {
     return { success: false, error: error.message }
   }
 
-  // Also create a record in rent_records if it's being marked as PAID
+    // Also create or update a record in rent_records if it's being marked as PAID
   if (details.status === 'PAID') {
-    await supabase
-      .from('rent_records')
-      .insert([{
-        tenant_id: data.tenant_id,
-        amount: details.amount,
-        status: 'PAID',
-        payment_mode: details.paymentMode,
-        paid_at: details.paidAt || new Date().toISOString()
-      }])
+    if (existing.status === 'PAID') {
+      await supabase
+        .from('rent_records')
+        .update({
+          amount: details.amount,
+          eb_charges: details.ebCharges || 0,
+          payment_mode: details.paymentMode,
+          paid_at: details.paidAt || existing.paid_at
+        })
+        .eq('tenant_id', existing.tenant_id)
+        .eq('paid_at', existing.paid_at)
+    } else {
+      await supabase
+        .from('rent_records')
+        .insert([{
+          tenant_id: data.tenant_id,
+          amount: details.amount,
+          eb_charges: details.ebCharges || 0,
+          status: 'PAID',
+          payment_mode: details.paymentMode,
+          paid_at: details.paidAt || new Date().toISOString()
+        }])
+    }
   }
+
+  revalidateTag('rent')
+  revalidateTag('dashboard')
 
   return { success: true, data }
 }
 
 export async function getRentAnalytics() {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
   
-  // 1. Parallel fetch for base data
-  const [ownerRes, recordsRes] = await Promise.all([
-    supabase.from('owners').select('properties(id)').eq('id', ownerId).single(),
-    supabase.from('rent_records')
-      .select('amount, paid_at')
-      .eq('status', 'PAID')
-      .gte('paid_at', new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1).toISOString())
-  ])
+  const fetchAnalytics = unstable_cache(
+    async (id) => {
+      const supabase = createServiceRoleClient()
+      
+      const [ownerRes, recordsRes] = await Promise.all([
+        supabase.from('owners').select('properties(id)').eq('id', id).single(),
+        supabase.from('rent_records')
+          .select('amount, paid_at')
+          .eq('status', 'PAID')
+          .gte('paid_at', new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1).toISOString())
+      ])
 
-  const propertyIds = ownerRes.data?.properties?.map(p => p.id) || []
-  const allPaidRecords = recordsRes.data || []
+      const propertyIds = ownerRes.data?.properties?.map(p => p.id) || []
+      const allPaidRecords = recordsRes.data || []
 
-  // 2. Calculate Target
-  let target = 0
-  if (propertyIds.length > 0) {
-    const { data: allRooms } = await supabase
-      .from('rooms')
-      .select('rent_per_bed, capacity')
-      .in('property_id', propertyIds)
+      let target = 0
+      if (propertyIds.length > 0) {
+        const { data: allRooms } = await supabase
+          .from('rooms')
+          .select('rent_per_bed, capacity')
+          .in('property_id', propertyIds)
 
-    target = allRooms?.reduce((sum, r) => sum + ((Number(r.rent_per_bed) || 0) * (r.capacity || 1)), 0) || 0
-  }
+        target = allRooms?.reduce((sum, r) => sum + ((Number(r.rent_per_bed) || 0) * (r.capacity || 1)), 0) || 0
+      }
 
-  // 3. Process Achieved and Trend in memory
-  const now = new Date()
-  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  
-  const achieved = allPaidRecords
-    .filter(r => new Date(r.paid_at) >= currentMonthStart)
-    .reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
+      const now = new Date()
+      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      
+      const achieved = allPaidRecords
+        .filter(r => new Date(r.paid_at) >= currentMonthStart)
+        .reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
 
-  const trend = []
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const label = months[d.getMonth()]
-    
-    const monthTotal = allPaidRecords
-      .filter(r => {
-        const pDate = new Date(r.paid_at)
-        return pDate.getMonth() === d.getMonth() && pDate.getFullYear() === d.getFullYear()
-      })
-      .reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
+      const trend = []
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        const label = months[d.getMonth()]
+        
+        const monthTotal = allPaidRecords
+          .filter(r => {
+            const pDate = new Date(r.paid_at)
+            return pDate.getMonth() === d.getMonth() && pDate.getFullYear() === d.getFullYear()
+          })
+          .reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
 
-    trend.push({ label, value: monthTotal, height: 0 })
-  }
+        trend.push({ label, value: monthTotal, height: 0 })
+      }
 
-  const maxVal = Math.max(...trend.map(t => t.value), target, 1)
-  trend.forEach(t => t.height = (t.value / maxVal) * 100)
+      const maxVal = Math.max(...trend.map(t => t.value), target, 1)
+      trend.forEach(t => t.height = (t.value / maxVal) * 100)
 
-  return { target, achieved, trend }
+      return { target, achieved, trend }
+    },
+    ['rent-analytics', ownerId],
+    { tags: ['rent', 'dashboard', `rent-${ownerId}`], revalidate: 60 }
+  )
+
+  return fetchAnalytics(ownerId)
 }

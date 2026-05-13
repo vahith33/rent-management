@@ -8,13 +8,6 @@ export default function SupportPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFB] font-sans pb-32">
-      {/* Header */}
-      <header className="bg-white px-6 py-4 flex items-center gap-6 sticky top-0 z-50">
-        <button onClick={() => router.back()} className="p-1 text-[#00685F]">
-           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        </button>
-        <h1 className="text-[20px] font-bold text-[#00685F]">Help & Support</h1>
-      </header>
 
       <main className="px-6 pt-12 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700">
         {/* Support Icon */}
@@ -37,18 +30,16 @@ export default function SupportPage() {
            
            <div className="space-y-2">
               <h3 className="text-2xl font-black text-[#1A2B28]">Request a Call</h3>
-              <p className="text-[#718096] font-medium text-[15px] leading-relaxed">
-                 Need assistance? Our support team will call you back within <span className="text-[#008075] font-bold">15 minutes</span>.
-              </p>
+
            </div>
 
-           <button className="w-full bg-[#00685F] py-5 rounded-[24px] text-white font-bold text-[17px] shadow-xl shadow-teal-900/10 active:scale-95 transition-all">
+           <button 
+             onClick={() => window.location.href = 'tel:9363658160'}
+             className="w-full bg-[#00685F] py-5 rounded-[24px] text-white font-bold text-[17px] shadow-xl shadow-teal-900/10 active:scale-95 transition-all"
+           >
               Call Me Now
            </button>
 
-           <div className="text-[10px] font-black text-[#ADB5BD] uppercase tracking-[0.2em] pt-2">
-              Available 24/7 • Premium Support
-           </div>
         </div>
 
       </main>

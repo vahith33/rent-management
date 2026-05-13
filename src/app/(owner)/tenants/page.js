@@ -127,21 +127,25 @@ export default function TenantsPage() {
               </div>
 
               {/* Stats Row */}
-              <div className="flex gap-4">
-                 <div className="flex-1 bg-white p-5 rounded-2xl border-l-4 border-[#00685F] shadow-sm">
-                    <p className="text-[12px] font-bold text-[#718096] mb-1">Monthly Rent</p>
-                    <p className="text-lg font-black text-[#1A2B28]">{selectedTenant.rent}</p>
-                 </div>
-                 <div className="flex-1 bg-white p-5 rounded-2xl border-l-4 border-[#00B4D8] shadow-sm">
-                    <p className="text-[12px] font-bold text-[#718096] mb-1">Security Deposit</p>
-                    <p className="text-lg font-black text-[#1A2B28]">{selectedTenant.deposit}</p>
-                 </div>
+              <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-white p-4 rounded-2xl border-l-4 border-[#00685F] shadow-sm">
+                     <p className="text-[10px] font-bold text-[#718096] mb-1 uppercase">Rent</p>
+                     <p className="text-[15px] font-black text-[#1A2B28]">{selectedTenant.rent}</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-2xl border-l-4 border-[#00B4D8] shadow-sm">
+                     <p className="text-[10px] font-bold text-[#718096] mb-1 uppercase">Deposit</p>
+                     <p className="text-[15px] font-black text-[#1A2B28]">{selectedTenant.deposit}</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-2xl border-l-4 border-blue-500 shadow-sm">
+                     <p className="text-[10px] font-bold text-[#718096] mb-1 uppercase">EB Total</p>
+                     <p className="text-[15px] font-black text-blue-600">₹{selectedTenant.totalEB?.toLocaleString('en-IN')}</p>
+                  </div>
               </div>
 
               {/* Info Sections */}
               <div className="bg-[#F8FAFB] rounded-[32px] p-6 space-y-6 border border-slate-50">
                  <div>
-                    <h3 className="text-[10px] font-black text-[#718096] uppercase tracking-widest mb-4">Resident Information</h3>
+                    <h3 className="text-[13px] font-bold text-[#718096] mb-4">Resident Information</h3>
                     <div className="grid grid-cols-2 gap-y-6">
                        <div className="space-y-1">
                           <p className="text-[11px] font-bold text-[#718096]">Phone Number</p>
@@ -173,7 +177,7 @@ export default function TenantsPage() {
                  </div>
 
                  <div className="pt-4 border-t border-slate-200/50">
-                    <h3 className="text-[10px] font-black text-[#718096] uppercase tracking-widest mb-4">Emergency Contact</h3>
+                    <h3 className="text-[13px] font-bold text-[#718096] mb-4">Emergency Contact</h3>
                     <div className="flex items-center justify-between">
                        <div className="space-y-0.5">
                           <p className="text-sm font-black text-[#1A2B28]">{selectedTenant.emergency_contact_name || 'Not Provided'}</p>
@@ -237,58 +241,82 @@ export default function TenantsPage() {
              </div>
 
              <div className="space-y-4">
-                <h3 className="text-[20px] font-bold text-[#1A2B28] font-heading">Active Residents ({filteredTenants.length})</h3>
+                <h3 className="text-[20px] font-bold text-[#1A2B28] font-heading">Active Residents ({loading ? '...' : filteredTenants.length})</h3>
                 
-                <div className="grid gap-4">
-                   {filteredTenants.map((tenant) => (
-                      <div key={tenant.id} className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm space-y-4 group hover:border-[#008075]/30 transition-all active:scale-[0.99]">
-                         <div className="flex items-center justify-between">
-                            <button 
-                               onClick={() => { setSelectedTenant(tenant); switchView('detail', `id=${tenant.id}`); }}
-                               className="flex items-center gap-4 text-left"
-                            >
-                               <div className="w-11 h-11 bg-[#00685F] text-white rounded-2xl flex items-center justify-center shadow-sm">
-                                  <span className="text-[14px] font-bold">{tenant.initials}</span>
+                {loading ? (
+                   <div className="grid gap-4">
+                      {[1, 2, 3].map(i => (
+                         <div key={i} className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm space-y-4 animate-pulse">
+                            <div className="flex items-center justify-between">
+                               <div className="flex items-center gap-4">
+                                  <div className="w-11 h-11 bg-slate-100 rounded-2xl"></div>
+                                  <div className="flex flex-col gap-2">
+                                     <div className="h-4 w-32 bg-slate-100 rounded-md"></div>
+                                     <div className="h-3 w-20 bg-slate-100 rounded-md"></div>
+                                  </div>
                                </div>
-                               <div className="flex flex-col">
-                                  <span className="text-[16px] font-black text-[#1A2B28]">{tenant.name}</span>
-                                  <span className="text-[12px] font-bold text-[#008075] mt-0.5">{tenant.phone}</span>
-                               </div>
-                            </button>
-                            <a 
-                               href={`tel:${tenant.phone.replace(/ /g, '')}`} 
-                               className="bg-[#EBFBF8] p-2.5 rounded-xl text-[#008075] hover:bg-[#008075] hover:text-white transition-all active:scale-90 shadow-sm"
-                            >
-                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            </a>
+                               <div className="w-10 h-10 bg-slate-50 rounded-xl"></div>
+                            </div>
+                            <div className="grid grid-cols-3 pt-3 border-t border-slate-50">
+                               <div className="h-8 bg-slate-50 rounded-lg mx-1"></div>
+                               <div className="h-8 bg-slate-50 rounded-lg mx-1"></div>
+                               <div className="h-8 bg-slate-50 rounded-lg mx-1"></div>
+                            </div>
                          </div>
+                      ))}
+                   </div>
+                ) : filteredTenants.length > 0 ? (
+                   <div className="grid gap-4">
+                      {filteredTenants.map((tenant) => (
+                         <div 
+                            key={tenant.id} 
+                            onClick={() => { setSelectedTenant(tenant); switchView('detail', `id=${tenant.id}`); }}
+                            className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm space-y-4 group hover:border-[#008075]/30 transition-all active:scale-[0.99] cursor-pointer"
+                         >
+                            <div className="flex items-center justify-between">
+                               <div className="flex items-center gap-4 text-left">
+                                  <div className="w-11 h-11 bg-[#00685F] text-white rounded-2xl flex items-center justify-center shadow-sm">
+                                     <span className="text-[14px] font-bold">{tenant.initials}</span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                     <span className="text-[16px] font-black text-[#1A2B28]">{tenant.name}</span>
+                                     <span className="text-[12px] font-bold text-[#008075] mt-0.5">{tenant.phone}</span>
+                                  </div>
+                               </div>
+                               <a 
+                                  href={`tel:${tenant.phone.replace(/ /g, '')}`} 
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="bg-[#EBFBF8] p-2.5 rounded-xl text-[#008075] hover:bg-[#008075] hover:text-white transition-all active:scale-90 shadow-sm relative z-10"
+                               >
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                               </a>
+                            </div>
 
-                         <div className="grid grid-cols-3 pt-3 border-t border-slate-50">
-                            <div className="flex flex-col items-start">
-                               <span className="text-[10px] font-bold text-[#718096] mb-0.5">Rent</span>
-                               <span className="text-[15px] font-black text-[#1A2B28]">{tenant.rent}</span>
-                            </div>
-                            <div className="flex flex-col items-center">
-                               <span className="text-[10px] font-bold text-[#718096] mb-0.5">Suite</span>
-                               <span className="text-[13px] font-bold text-[#1A2B28]">{tenant.room}</span>
-                            </div>
-                            <div className="flex flex-col items-end">
-                               <div className="flex flex-col items-center min-w-[70px]">
-                                  <span className="text-[10px] font-bold text-[#718096] mb-1">Status</span>
-                                  <div className="px-2.5 py-1 rounded-full bg-[#EBFBF8] text-[#008075] text-[9px] font-black">
-                                     Active
+                            <div className="grid grid-cols-3 pt-3 border-t border-slate-50">
+                               <div className="flex flex-col items-start">
+                                  <span className="text-[10px] font-bold text-[#718096] mb-0.5">Rent</span>
+                                  <span className="text-[15px] font-black text-[#1A2B28]">{tenant.rent}</span>
+                               </div>
+                               <div className="flex flex-col items-center">
+                                  <span className="text-[10px] font-bold text-[#718096] mb-0.5">Suite</span>
+                                  <span className="text-[13px] font-bold text-[#1A2B28]">{tenant.room}</span>
+                               </div>
+                               <div className="flex flex-col items-end">
+                                  <div className="flex flex-col items-center min-w-[70px]">
+                                     <span className="text-[10px] font-bold text-[#718096] mb-1">Status</span>
+                                     <div className="px-2.5 py-1 rounded-full bg-[#EBFBF8] text-[#008075] text-[9px] font-black">
+                                        Active
+                                     </div>
                                   </div>
                                </div>
                             </div>
                          </div>
-                      </div>
-                   ))}
-                </div>
-                
-                {filteredTenants.length === 0 && (
+                      ))}
+                   </div>
+                ) : (
                    <div className="flex flex-col items-center py-12 text-slate-400 gap-3">
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                      <p className="text-sm font-medium">No tenants match your search</p>
+                      <p className="text-sm font-medium">{searchQuery ? 'No tenants match your search' : 'No active residents available'}</p>
                    </div>
                 )}
              </div>

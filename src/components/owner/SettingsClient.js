@@ -112,19 +112,17 @@ export default function SettingsClient({ initialData }) {
               {/* Mobile */}
               <div className="space-y-2">
                  <label className="text-[11px] font-bold text-[#718096] uppercase tracking-wider ml-1">Mobile Number</label>
-                 <div className="bg-[#F8FAFB] rounded-[20px] py-5 px-6 flex items-center justify-between border border-transparent">
-                    <div className="flex items-center gap-4">
-                       <div className="text-[#008075]">
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-                       </div>
-                       <span className="text-[15px] font-bold text-[#1A2B28]">+91 {phone}</span>
+                 <div className="relative">
+                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#1A2B28] font-bold text-[15px]">
+                       +91
                     </div>
-                    <button 
-                      onClick={() => router.push('/settings/change-mobile')}
-                      className="text-[14px] font-black text-[#00685F] active:scale-95"
-                    >
-                      Change
-                    </button>
+                    <input 
+                      type="tel" 
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full bg-[#F8FAFB] rounded-[20px] py-5 pl-16 pr-6 text-[15px] font-bold text-[#1A2B28] outline-none focus:ring-2 focus:ring-[#00685F]/10 border border-transparent focus:border-[#00685F]/20 transition-all"
+                      placeholder="Mobile Number"
+                    />
                  </div>
               </div>
            </div>

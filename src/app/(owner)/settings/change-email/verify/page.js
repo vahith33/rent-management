@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { updateOwnerProfile } from "@/actions/owner";
+import { updateOwnerProfile, getOwnerInfo } from "@/actions/owner";
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -44,6 +44,11 @@ function VerifyEmailContent() {
     const supabase = createClient();
 
     try {
+      // Get the owner ID BEFORE verifying OTP. 
+      // Once OTP is verified, the auth email changes, which could break the fallback lookup.
+      const ownerInfo = await getOwnerInfo();
+      const currentOwnerId = ownerInfo.id;
+
       // 1. Verify the OTP with Supabase Auth (type: 'email_change' or 'email' depending on config)
       // For email change, Supabase uses 'email_change' type
       const { error: authError } = await supabase.auth.verifyOtp({
@@ -68,9 +73,8 @@ function VerifyEmailContent() {
       }
 
       // 2. Sync the new email to our 'owners' table
-      // We'll use our existing updateOwnerProfile action
-      // But we need to update it to support email as well
-      await updateOwnerProfile({ email: email });
+      // We explicitly pass the ownerId so the lookup doesn't fail.
+      await updateOwnerProfile({ ownerId: currentOwnerId, email: email });
 
       setSuccess(true);
       setTimeout(() => {

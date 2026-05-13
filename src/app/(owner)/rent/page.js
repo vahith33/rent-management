@@ -78,13 +78,15 @@ export default function RentManagementPage() {
   const [paymentMode, setPaymentMode] = useState("UPI (GPay/PhonePe)");
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [ebCharges, setEbCharges] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const openPaymentCollector = (tenant, isEdit = false) => {
     setSelectedTenant(tenant);
     setEditableAmount(tenant.rawRent || "");
-    setPaymentDate(isEdit && tenant.date ? new Date(tenant.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+    setPaymentDate(isEdit && tenant.paidAt ? new Date(tenant.paidAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
     setPaymentMode(isEdit && tenant.mode ? tenant.mode : "UPI (GPay/PhonePe)");
+    setEbCharges(isEdit && tenant.ebCharges ? tenant.ebCharges : "");
     setIsEditingExisting(isEdit);
     setShowConfirm(true);
   };
@@ -96,6 +98,7 @@ export default function RentManagementPage() {
     try {
       const result = await updateRentPayment(selectedTenant.id, {
         amount: Number(editableAmount),
+        ebCharges: Number(ebCharges) || 0,
         paymentMode,
         paidAt: paymentDate,
         status: 'PAID'
@@ -239,11 +242,13 @@ export default function RentManagementPage() {
                            </div>
                         </div>
                       ))
-                    ) : list.length > 0 ? list.map((tenant) => (
+                    ) : list.length > 0 ? list.map((tenant) => {
+                       const isPartial = tenant.status === 'PAID' && tenant.baseRent && Number(tenant.rawRent) < Number(tenant.baseRent);
+                       return (
                        <div 
                          key={tenant.id} 
                          onClick={() => view === 'paid' && openPaymentCollector(tenant, true)}
-                         className={`bg-white rounded-[28px] p-5 shadow-sm border border-slate-100 space-y-4 group active:scale-[0.98] transition-all ${view === 'paid' ? 'cursor-pointer hover:border-teal-100' : ''}`}
+                         className={`${isPartial ? 'bg-amber-50/50 border-amber-100' : 'bg-white border-slate-100'} rounded-[28px] p-5 shadow-sm border space-y-4 group active:scale-[0.98] transition-all ${view === 'paid' ? 'cursor-pointer hover:border-teal-100' : ''}`}
                        >
                           <div className="flex items-center gap-4">
                              <div className={`w-11 h-11 bg-[#00685F] text-white rounded-2xl flex items-center justify-center shadow-sm`}>
@@ -258,7 +263,12 @@ export default function RentManagementPage() {
                           <div className="grid grid-cols-3 pt-3 border-t border-slate-50">
                              <div className="flex flex-col items-start">
                                 <span className="text-[10px] font-bold text-[#718096] mb-0.5">Amount</span>
-                                <span className="text-[15px] font-black text-[#1A2B28]">{tenant.rent}</span>
+                                <div className="flex flex-col">
+                                   <span className="text-[15px] font-black text-[#1A2B28]">{tenant.rent}</span>
+                                   {tenant.ebCharges > 0 && (
+                                      <span className="text-[10px] font-bold text-blue-500">+ ₹{tenant.ebCharges} EB</span>
+                                   )}
+                                </div>
                              </div>
                              <div className="flex flex-col items-center">
                                 <span className="text-[10px] font-bold text-[#718096] mb-0.5">Suite</span>
@@ -270,13 +280,15 @@ export default function RentManagementPage() {
                                    {view === 'unpaid' ? (
                                      <button onClick={(e) => { e.stopPropagation(); openPaymentCollector(tenant); }} className="bg-[#008075] text-white px-3.5 py-1.5 rounded-xl text-[11px] font-black shadow-lg shadow-teal-900/10 active:scale-95 transition-all">Collect</button>
                                    ) : (
-                                     <div className="px-2.5 py-1 rounded-full bg-[#EBFBF8] text-[#008075] text-[9px] font-black">Paid</div>
+                                                                           <div className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest ${isPartial ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-500'}`}>
+                                         {isPartial ? 'PARTIAL' : 'PAID'}
+                                      </div>
                                    )}
                                 </div>
                              </div>
                           </div>
                        </div>
-                    )) : !loading && (
+                    );}) : !loading && (
                        <div className="py-20 text-center opacity-30 flex flex-col items-center gap-4"><div className="w-16 h-16 border-2 border-dashed border-slate-400 rounded-full flex items-center justify-center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><p className="font-bold text-[14px]">NO RESULTS MATCH SEARCH</p></div>
                     )}
                  </div>
@@ -307,6 +319,17 @@ export default function RentManagementPage() {
                        <div className="space-y-1.5 bg-[#EEF2F8] p-5 rounded-[24px] border-l-4 border-amber-500 shadow-sm">
                           <p className="text-[10px] font-bold text-[#718096] uppercase tracking-widest mb-1">Due Date</p>
                           <input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="bg-transparent border-none w-full text-[14px] font-black text-[#1A2B28] outline-none"/>
+                       </div>
+
+                       <div className="col-span-2 space-y-1.5 bg-[#EEF2F8] p-5 rounded-[24px] border-l-4 border-blue-500 shadow-sm relative overflow-hidden">
+                           <p className="text-[10px] font-bold text-[#718096] uppercase tracking-widest mb-1">Electric Charges (Optional)</p>
+                                                       <div className="flex items-center gap-2"><span className="text-lg font-black text-blue-600">₹</span><input type="number" placeholder="0" value={ebCharges} onChange={(e) => setEbCharges(e.target.value)} className="bg-transparent border-none w-full text-lg font-black text-blue-600 outline-none"/></div>
+                            {selectedTenant?.totalEbPaid > 0 && !isEditingExisting && (
+                               <div className="mt-2 flex items-center gap-1.5 py-1.5 px-3 bg-blue-100/50 rounded-lg border border-blue-200 animate-in fade-in slide-in-from-top-1 duration-300">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                  <span className="text-[11px] font-bold text-blue-700">Resident already paid ₹{selectedTenant.totalEbPaid} for EB this month</span>
+                               </div>
+                            )}
                        </div>
                     </div>
 
@@ -383,7 +406,7 @@ export default function RentManagementPage() {
                 </div>
                 <div className="flex flex-col items-start text-left">
                   <span className="text-xl font-black text-[#1A2B28]">Paid Tenants</span>
-                  <span className="text-[12px] font-bold text-[#008075] mt-1">{loading ? 'Updating...' : `${counts.paid} Cleared this Month`}</span>
+                  <span className="text-[12px] font-bold text-[#008075] mt-1">{loading ? 'Updating...' : `${counts.paid} Transactions this Month`}</span>
                 </div>
               </button>
 

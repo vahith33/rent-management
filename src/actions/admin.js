@@ -80,6 +80,7 @@ export async function addPG(formData) {
 
   // c. Insert into owners
   const { data: newOwner, error: ownerError } = await supabase.from('owners').insert({
+    id: userId,
     supabase_user_id: userId,
     name,
     email,

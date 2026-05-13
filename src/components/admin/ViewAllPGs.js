@@ -94,7 +94,7 @@ export default function ViewAllPGs({ initialData }) {
         <h3 className="text-xl font-black text-[#1A2B28]">No PGs registered yet</h3>
         <p className="text-sm font-medium text-[#718096] mt-2 mb-6">Add your first PG to start managing.</p>
         <button 
-          onClick={() => { const params = new URLSearchParams(window.location.search); params.set('tab', 'add'); router.push(`?${params.toString()}`) }}
+          onClick={() => router.push('/admin/dashboard?tab=add')}
           className="bg-[#00685F] text-white px-6 py-3 rounded-[20px] font-bold active:scale-95 transition-all shadow-lg shadow-teal-900/10"
         >
           Add New PG

@@ -35,21 +35,7 @@ function AddTenantForm() {
 
   useEffect(() => {
     setMounted(true);
-    // Load from sessionStorage on mount if available and no search params are set (but not in edit mode)
-    if (!editId) {
-      const saved = sessionStorage.getItem('tenant_form_draft');
-      if (saved && !searchParams.toString()) {
-        setFormData(JSON.parse(saved));
-      }
-    }
-  }, [editId]);
-
-  // Save to sessionStorage whenever formData changes (only if not editing)
-  useEffect(() => {
-    if (mounted && !editId) {
-      sessionStorage.setItem('tenant_form_draft', JSON.stringify(formData));
-    }
-  }, [formData, mounted, editId]);
+  }, []);
 
   // Sync searchParams into formData when they change (returning from selection)
   useEffect(() => {
@@ -111,7 +97,6 @@ function AddTenantForm() {
         : await createTenant(formData);
       
       if (result.success) {
-        if (!editId) sessionStorage.removeItem('tenant_form_draft');
         setShowSuccess(true);
         setTimeout(() => {
           router.push(editId ? `/tenants?view=detail&id=${editId}` : '/tenants');
@@ -461,10 +446,7 @@ function AddTenantForm() {
       <footer className="px-4 py-8 flex gap-3">
         <button 
           type="button"
-          onClick={() => {
-            sessionStorage.removeItem('tenant_form_draft');
-            router.replace('/tenants');
-          }}
+          onClick={() => router.replace('/tenants')}
           className="flex-1 py-4 rounded-[20px] bg-[#F1F4F8] text-[#1A2B28] font-bold hover:bg-slate-200 transition-all active:scale-[0.98]"
         >
           Cancel
