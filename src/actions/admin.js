@@ -1,6 +1,7 @@
 'use server'
 
 import { createServiceRoleClient } from '../lib/supabase/service'
+import { revalidatePath } from 'next/cache'
 
 export async function getAllPGs() {
   const supabase = createServiceRoleClient()
@@ -10,7 +11,7 @@ export async function getAllPGs() {
     .select(`
       id, name, email, phone, status, plan_rupee, admin_notes, created_at,
       properties ( name, address ),
-      tenant_assignments ( id, status )
+      tenants ( id, status )
     `)
     .order('created_at', { ascending: false })
 
@@ -22,7 +23,7 @@ export async function getAllPGs() {
   // Transform data to match requested format
   const formattedData = data.map((owner) => {
     const property = owner.properties && owner.properties.length > 0 ? owner.properties[0] : owner.properties || {}
-    const activeTenants = owner.tenant_assignments ? owner.tenant_assignments.filter((ta) => ta.status === 'active').length : 0
+    const activeTenants = owner.tenants ? owner.tenants.filter((t) => t.status === 'ACTIVE').length : 0
 
     return {
       id: owner.id,
@@ -120,10 +121,16 @@ export async function togglePGStatus(ownerId, currentStatus) {
   if (currentStatus === 'active') {
     await supabase.from('owners').update({ status: 'disabled' }).eq('id', ownerId)
     await supabase.auth.admin.updateUserById(owner.supabase_user_id, { ban_duration: '87600h' })
+    // Force sign out from all sessions immediately
+    await supabase.auth.admin.signOut(owner.supabase_user_id)
   } else {
     await supabase.from('owners').update({ status: 'active' }).eq('id', ownerId)
     await supabase.auth.admin.updateUserById(owner.supabase_user_id, { ban_duration: 'none' })
   }
+
+  revalidatePath('/admin/dashboard')
+  revalidatePath(`/admin/pg/${ownerId}`)
+  
   return { success: true }
 }
 
@@ -195,7 +202,7 @@ export async function getPGById(ownerId) {
     .select(`
       id, name, email, phone, status, plan_rupee, admin_notes, created_at,
       properties ( name, address ),
-      tenant_assignments ( id, status )
+      tenants ( id, status )
     `)
     .eq('id', ownerId)
     .single()
@@ -206,7 +213,7 @@ export async function getPGById(ownerId) {
   }
 
   const property = owner.properties && owner.properties.length > 0 ? owner.properties[0] : owner.properties || {}
-  const activeTenants = owner.tenant_assignments ? owner.tenant_assignments.filter((ta) => ta.status === 'active').length : 0
+  const activeTenants = owner.tenants ? owner.tenants.filter((t) => t.status === 'ACTIVE').length : 0
 
   return {
     id: owner.id,

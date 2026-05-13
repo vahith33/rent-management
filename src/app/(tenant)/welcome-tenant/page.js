@@ -35,7 +35,7 @@ export default function WelcomeTenantPage() {
             Welcome back,<br />Ravi Kumar
           </h1>
           <p className="text-[#718096] text-[17px] font-medium leading-relaxed px-4">
-            Your luxury living experience with <span className="text-[#008075] font-bold">StayEase</span> continues.
+            Your living experience with <span className="text-[#008075] font-bold">Pg Manager</span> continues.
           </p>
         </div>
 

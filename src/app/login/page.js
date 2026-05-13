@@ -60,7 +60,7 @@ export default function LoginPage() {
             <path d="M3 10L12 3L21 10V21H16V14H8V21H3V10Z" />
           </svg>
         </div>
-        <h1 className="text-white text-[22px] font-bold tracking-tight">StayEase</h1>
+        <h1 className="text-white text-[22px] font-bold tracking-tight">Pg Manager</h1>
         <div className="absolute top-[-40px] right-[-40px] w-32 h-32 bg-[#008075] rounded-full blur-[60px] opacity-20"></div>
       </div>
 

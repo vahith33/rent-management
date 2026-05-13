@@ -78,7 +78,7 @@ function OtpVerifyContent() {
           <button onClick={() => router.push("/login")} className="p-2 hover:bg-[#008075]/5 rounded-full transition-all group">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#008075" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-0.5 transition-transform"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           </button>
-          <h1 className="text-[#008075] text-xl font-bold tracking-tight">StayEase</h1>
+          <h1 className="text-[#008075] text-xl font-bold tracking-tight">Pg Manager</h1>
         </nav>
 
         <header className="mb-10 pl-2">

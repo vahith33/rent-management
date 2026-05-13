@@ -5,13 +5,13 @@ import { createClient } from '../../lib/supabase/server'
 
 export async function classifyUser() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     redirect('/login')
   }
 
-  const email = session.user.email
+  const email = user.email
   
   // 1. Check Admin
   if (email === process.env.ADMIN_EMAIL) {

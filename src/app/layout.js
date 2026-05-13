@@ -14,8 +14,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "StayEase | The Digital Concierge",
-  description: "Experience premium rental management with StayEase. The elegant editorial ledger for your property business.",
+  title: "Pg Manager | The Digital Concierge",
+  description: "Experience premium rental management with Pg Manager. The elegant editorial ledger for your property business.",
 };
 
 export default function RootLayout({ children }) {

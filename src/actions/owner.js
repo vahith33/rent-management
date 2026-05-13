@@ -36,23 +36,8 @@ export const getAuthenticatedOwnerId = cache(async function getAuthenticatedOwne
     }
   }
 
-  // Fallback for mock/dev sessions
-  const cookieStore = await cookies()
-  const mockEmail = cookieStore.get('mock_session_email')?.value
-  
-  if (mockEmail) {
-    const { data, error: lookupError } = await adminSupabase
-      .from('owners')
-      .select('id')
-      .eq('email', mockEmail)
-      .single()
-      
-    if (!lookupError && data) return data.id
-  }
-  
-  // Final fallback for local development (only if above fails)
-  console.warn('Authentication/Owner lookup failed, using dev fallback ID')
-  return 'e3bdf815-ffc0-4a7c-aa35-fa9647fa7d4e' 
+  // Final fallback: No auth found
+  return null
 })
 
 export async function getOwnerInfo() {
@@ -858,7 +843,13 @@ export async function getRentAnalytics() {
       const [ownerRes, recordsRes] = await Promise.all([
         supabase.from('owners').select('properties(id)').eq('id', id).single(),
         supabase.from('rent_records')
-          .select('amount, paid_at')
+          .select(`
+            amount, 
+            eb_charges, 
+            paid_at,
+            tenants!inner(owner_id)
+          `)
+          .eq('tenants.owner_id', id)
           .eq('status', 'PAID')
           .gte('paid_at', new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1).toISOString())
       ])
@@ -884,25 +875,29 @@ export async function getRentAnalytics() {
         .filter(r => new Date(r.paid_at) >= currentMonthStart)
         .reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
 
+      const ebAchieved = allPaidRecords
+        .filter(r => new Date(r.paid_at) >= currentMonthStart)
+        .reduce((sum, r) => sum + (Number(r.eb_charges) || 0), 0)
+
       const trend = []
-      for (let i = 5; i >= 0; i--) {
+      for (let i = 3; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
         const label = months[d.getMonth()]
         
-        const monthTotal = allPaidRecords
+        const monthRent = allPaidRecords
           .filter(r => {
             const pDate = new Date(r.paid_at)
             return pDate.getMonth() === d.getMonth() && pDate.getFullYear() === d.getFullYear()
           })
           .reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
 
-        trend.push({ label, value: monthTotal, height: 0 })
+        trend.push({ label, value: monthRent, rent: monthRent, height: 0 })
       }
 
       const maxVal = Math.max(...trend.map(t => t.value), target, 1)
       trend.forEach(t => t.height = (t.value / maxVal) * 100)
 
-      return { target, achieved, trend }
+      return { target, achieved, ebAchieved, trend }
     },
     ['rent-analytics', ownerId],
     { tags: ['rent', 'dashboard', `rent-${ownerId}`], revalidate: 60 }

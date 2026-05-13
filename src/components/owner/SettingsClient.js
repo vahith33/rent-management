@@ -82,7 +82,7 @@ export default function SettingsClient({ initialData }) {
                       value={pgName}
                       onChange={(e) => setPgName(e.target.value)}
                       className="w-full bg-[#F8FAFB] rounded-[20px] py-5 px-6 text-[15px] font-bold text-[#1A2B28] outline-none focus:ring-2 focus:ring-[#00685F]/10 border border-transparent focus:border-[#00685F]/20 transition-all"
-                      placeholder="e.g. StayEase Elite PG"
+                      placeholder="e.g. Pg Manager"
                     />
                     <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[#008075]">
                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>

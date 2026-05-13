@@ -27,7 +27,7 @@ export default function TenantDashboard() {
       <header className="bg-white px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
         <div className="flex items-center gap-1 group cursor-pointer" onClick={() => router.push('/welcome-tenant')}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A2B28" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          <h1 className="text-lg font-bold text-[#1A2B28]">StayEase</h1>
+          <h1 className="text-lg font-bold text-[#1A2B28]">Pg Manager</h1>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative cursor-pointer">

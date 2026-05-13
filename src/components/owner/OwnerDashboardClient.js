@@ -30,7 +30,7 @@ export default function OwnerDashboardClient({ initialData }) {
 
         {/* KPI Cards Grid */}
         <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-          <div onClick={() => router.push('/tenants?view=list')} className="bg-white p-4 rounded-[24px] shadow-sm border-l-4 border-[#008075] cursor-pointer active:scale-95 transition-all">
+          <div onClick={() => router.push('/tenants?view=list')} className="bg-white p-4 rounded-[24px] shadow-sm border-l-4  cursor-pointer active:scale-95 transition-all">
             <span className="text-[11px] font-bold text-[#ADB5BD] ">Total Tenants</span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-2xl font-black text-[#1A2B28]">{stats.totalTenants}</span>
@@ -61,10 +61,10 @@ export default function OwnerDashboardClient({ initialData }) {
             </div>
           </div>
 
-          <div onClick={() => router.push('/rent?view=analytics')} className="bg-white p-4 rounded-[24px] shadow-sm cursor-pointer border-l-4 border-blue-500 active:scale-95 transition-all">
+          <div onClick={() => router.push('/rent?view=analytics')} className="bg-white p-4 rounded-[24px] shadow-sm cursor-pointer border-l-4  active:scale-95 transition-all">
             <span className="text-[11px] font-bold text-[#ADB5BD] ">EB Collected</span>
             <div className="mt-1">
-              <span className="text-2xl font-black text-blue-600">₹{stats.ebCollected}</span>
+              <span className="text-2xl font-black text-[#1A2B28]">₹{stats.ebCollected}</span>
             </div>
           </div>
         </div>

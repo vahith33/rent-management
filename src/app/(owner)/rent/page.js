@@ -121,47 +121,53 @@ export default function RentManagementPage() {
 
   // ==========================================
   // VIEW: ANALYTICS
-  // ==========================================
   if (view === "analytics") {
     return (
        <div className="min-h-screen bg-white animate-in fade-in duration-500 font-body pb-32">
            <main className="px-6 py-8 space-y-8">
-              <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-50 space-y-6">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-50 space-y-6">
                  <div className="flex items-center justify-between">
                     <h3 className="text-[13px] font-black text-[#1A2B28]">Monthly Collection Trend</h3>
                  </div>
                  
-                 <div className="h-40 flex items-end justify-between px-2 gap-2">
+                 <div className="h-44 flex items-end justify-between px-2 gap-3 pt-8">
                     {loading ? (
-                      [...Array(6)].map((_, i) => (
-                        <div key={i} className="w-full bg-slate-100/50 rounded-t-xl animate-pulse" style={{ height: `${20 + Math.random() * 60}%` }}></div>
+                      [40, 70, 50, 60].map((h, i) => (
+                        <div key={i} className="w-full bg-slate-100/50 rounded-t-lg animate-pulse" style={{ height: `${h}%` }}></div>
                       ))
                     ) : (
                       analyticsData?.trend.map((month, i) => (
-                        <div key={i} className="w-full bg-[#EBFBF8] rounded-t-xl relative group">
+                        <div key={i} className="flex-1 bg-slate-50 rounded-t-lg relative group h-full flex flex-col justify-end">
+                            {/* Value Label */}
+                            <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                              <span className="text-[9px] font-black text-[#00685F] bg-[#EBFBF8] px-1.5 py-0.5 rounded-sm whitespace-nowrap shadow-sm border border-[#00685F]/5">
+                                ₹{(month.rent / 1000).toFixed(1)}k
+                              </span>
+                            </div>
+                            
+                            {/* The Bar */}
                             <div 
-                              className="bg-[#008075] absolute bottom-0 left-0 right-0 rounded-t-xl transition-all duration-1000" 
-                              style={{ height: `${month.height}%` }}
-                            ></div>
-                            <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-[#008075] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                ₹{new Intl.NumberFormat('en-IN').format(month.value)}
-                            </span>
+                              className="bg-[#008075] w-full rounded-t-lg transition-all duration-1000 relative shadow-[0_-4px_12px_rgba(0,104,95,0.1)]" 
+                              style={{ height: `${Math.max((month.rent / (analyticsData?.target || month.value || 1)) * 100, 4)}%` }}
+                            >
+                               <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-lg"></div>
+                            </div>
                         </div>
                       ))
                     )}
                  </div>
-                 <div className="flex justify-between text-[10px] font-bold text-[#718096] uppercase px-1">
+                 <div className="flex justify-between text-[10px] font-black text-[#1A2B28] uppercase px-1 pt-2">
                     {loading ? (
-                       [...Array(6)].map((_, i) => <div key={i} className="w-8 h-2 bg-slate-100 rounded animate-pulse"></div>)
+                       [...Array(4)].map((_, i) => <div key={i} className="w-8 h-2 bg-slate-100 rounded animate-pulse"></div>)
                     ) : (
                       analyticsData?.trend.map((month, i) => (
-                        <span key={i}>{month.label}</span>
+                        <span key={i} className="flex-1 text-center">{month.label}</span>
                       ))
                     )}
                  </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                  <div className="bg-white p-5 rounded-2xl border-l-4 border-[#008075] shadow-sm">
                     <p className="text-[12px] font-bold text-[#718096] mb-1">Target</p>
                     {loading ? (
@@ -172,8 +178,8 @@ export default function RentManagementPage() {
                       </p>
                     )}
                  </div>
-                 <div className="bg-white p-5 rounded-2xl border-l-4 border-amber-500 shadow-sm">
-                    <p className="text-[12px] font-bold text-[#718096] mb-1">Achieved</p>
+                 <div className="bg-white p-5 rounded-2xl border-l-4 border-[#008075]/40 shadow-sm">
+                    <p className="text-[12px] font-bold text-[#718096] mb-1">Rent Collected</p>
                     {loading ? (
                        <div className="h-6 w-24 bg-slate-100 rounded animate-pulse mt-1"></div>
                     ) : (
@@ -182,9 +188,19 @@ export default function RentManagementPage() {
                       </p>
                     )}
                  </div>
+                 <div className="bg-white p-5 rounded-2xl border-l-4 border-amber-500 shadow-sm col-span-2 sm:col-span-1">
+                    <p className="text-[12px] font-bold text-[#718096] mb-1">EB Collected</p>
+                    {loading ? (
+                       <div className="h-6 w-24 bg-slate-100 rounded animate-pulse mt-1"></div>
+                    ) : (
+                      <p className="text-xl font-black text-[#1A2B28]">
+                         ₹{new Intl.NumberFormat('en-IN').format(analyticsData?.ebAchieved || 0)}
+                      </p>
+                    )}
+                 </div>
               </div>
            </main>
-        </div>
+       </div>
     )
   }
 

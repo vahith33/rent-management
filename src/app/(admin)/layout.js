@@ -4,17 +4,13 @@ import { cookies } from 'next/headers'
 
 export default async function AdminLayout({ children }) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
   
-  // Get mock cookie if it exists
-  const cookieStore = await cookies()
-  const mockEmail = cookieStore.get('mock_session_email')?.value
-
-  if (!session && !mockEmail) {
+  if (!user) {
     redirect('/login')
   }
 
-  const email = session?.user?.email || mockEmail
+  const email = user.email
   const adminEmail = process.env.ADMIN_EMAIL
 
   if (email !== adminEmail) {

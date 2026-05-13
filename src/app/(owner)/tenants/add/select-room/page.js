@@ -112,13 +112,19 @@ export default function SelectRoomPage() {
                       : "bg-white text-[#1A2B28] border-slate-100 hover:border-[#008075]/30"
                   }`}
                 >
-                  <span className="text-[16px] font-black">{room.building}-{room.room_number}</span>
-                  <div className="flex flex-col items-center">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-white/70' : 'text-[#718096]'}`}>
-                      Floor:{room.floor.split(' ')[0]}
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-[15px] font-black leading-none">Room {room.room_number}</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-white/60' : 'text-[#718096]'}`}>
+                      Floor {room.floor.split(' ')[0]}
                     </span>
-                    <span className={`text-[10px] font-black uppercase mt-0.5 ${isSelected ? 'text-white/90' : 'text-[#008075]'}`}>
-                      Available:{room.available}
+                  </div>
+
+                  <div className="flex flex-col items-center mt-1">
+                    <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase mb-1 ${isSelected ? 'bg-white/10 text-white' : 'bg-slate-50 text-[#718096]'}`}>
+                      Building {room.building}
+                    </div>
+                    <span className={`text-[10px] font-black uppercase ${isSelected ? 'text-white/90' : 'text-[#008075]'}`}>
+                      Available: {room.available}
                     </span>
                   </div>
                   
@@ -145,13 +151,16 @@ export default function SelectRoomPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <span className="text-[10px] font-bold text-[#008075] uppercase tracking-wider">Selected Room</span>
-                <h2 className="text-[22px] font-black text-[#1A2B28]">
-                  {selectedRoomData.building}-{selectedRoomData.room_number}
-                </h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-[12px] font-medium text-[#718096]">{selectedRoomData.type}</span>
-                  <span className="text-[12px] text-slate-200">•</span>
-                  <span className="text-[12px] font-medium text-[#008075]">{selectedRoomData.available} beds available</span>
+                <div className="flex flex-col gap-0.5">
+                  <h2 className="text-[18px] font-black text-[#1A2B28] leading-none">Room {selectedRoomData.room_number}</h2>
+                  <div className="flex flex-col">
+                    <span className="text-[12px] font-bold text-[#718096]">Floor {selectedRoomData.floor.split(' ')[0]}</span>
+                    <span className="text-[11px] font-medium text-[#718096]/80 uppercase tracking-wider">Building {selectedRoomData.building}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] font-black bg-[#EBFBF8] text-[#008075] px-1.5 py-0.5 rounded uppercase tracking-tighter">{selectedRoomData.type}</span>
+                    <span className="text-[11px] font-black text-[#008075]">Available: {selectedRoomData.available}</span>
+                  </div>
                 </div>
               </div>
               

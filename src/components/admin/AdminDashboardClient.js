@@ -36,7 +36,7 @@ export default function AdminDashboardClient({ initialData, adminEmail }) {
   return (
     <div className="flex flex-col min-h-screen">
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center z-10 sticky top-0">
-        <div className="font-black text-[#1A2B28] text-xl">StayEase Admin</div>
+        <div className="font-black text-[#1A2B28] text-xl">Pg Manager Admin</div>
         <div className="flex items-center gap-4">
           <span className="text-sm font-bold text-[#718096]">{adminEmail}</span>
           <button 
