@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { updateOwnerProfile, getOwnerInfo } from "@/actions/owner";
+import { toast } from "react-hot-toast";
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -12,7 +13,6 @@ function VerifyEmailContent() {
   
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const otpRefs = useRef([]);
 
@@ -33,10 +33,9 @@ function VerifyEmailContent() {
   };
 
   const handleVerify = async () => {
-    setError("");
     const enteredOtp = otp.join("");
     if (enteredOtp.length !== 6) {
-      setError("Please enter the full 6-digit code");
+      toast.error("Please enter the full 6-digit code");
       return;
     }
 
@@ -66,7 +65,7 @@ function VerifyEmailContent() {
         });
 
         if (secondTryError) {
-          setError(authError.message);
+          toast.error(authError.message);
           setIsLoading(false);
           return;
         }
@@ -76,6 +75,7 @@ function VerifyEmailContent() {
       // We explicitly pass the ownerId so the lookup doesn't fail.
       await updateOwnerProfile({ ownerId: currentOwnerId, email: email });
 
+      toast.success("Email updated successfully");
       setSuccess(true);
       setTimeout(() => {
         router.push('/settings');
@@ -83,7 +83,7 @@ function VerifyEmailContent() {
       }, 2000);
 
     } catch (err) {
-      setError("An unexpected error occurred.");
+      toast.error("An unexpected error occurred.");
       setIsLoading(false);
     }
   };
@@ -107,12 +107,6 @@ function VerifyEmailContent() {
              <h2 className="text-[24px] font-black text-[#1A2B28]">Check your inbox</h2>
              <p className="text-[14px] font-medium text-[#718096] px-4">Enter the 6-digit code we sent to<br/><span className="font-bold text-[#1A2B28]">{email}</span></p>
           </div>
-
-          {error && (
-            <div className="w-full bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold animate-in shake duration-500">
-              {error}
-            </div>
-          )}
 
           <div className="flex gap-3 justify-center">
             {otp.map((digit, i) => (

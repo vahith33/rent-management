@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getRooms, updateRoom, uploadRoomPhoto } from '@/actions/owner';
+import { toast } from 'react-hot-toast';
 
 function EditRoomContent() {
   const router = useRouter();
@@ -12,7 +13,6 @@ function EditRoomContent() {
   const [mounted, setMounted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -27,6 +27,8 @@ function EditRoomContent() {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [minCapacity, setMinCapacity] = useState(1);
+  const [occupiedBeds, setOccupiedBeds] = useState([]); // Array of bed indices
 
   useEffect(() => {
     setMounted(true);
@@ -41,6 +43,22 @@ function EditRoomContent() {
     const room = rooms.find(r => String(r.id) === String(roomId));
     
     if (room) {
+      const activeAssignments = room.assignments?.filter(ta => 
+        String(ta.status).toUpperCase() === 'ACTIVE'
+      ) || [];
+      
+      const occupiedIndices = activeAssignments.map(ta => {
+        const parts = String(ta.bed_index).split('-');
+        const lastPart = parts[parts.length - 1];
+        return Number(lastPart);
+      }).filter(n => !isNaN(n));
+      
+      const maxOccupiedIndex = occupiedIndices.length > 0 ? Math.max(...occupiedIndices) : 0;
+      
+      // If we have bed 3 occupied, min capacity must be at least 3
+      setMinCapacity(maxOccupiedIndex);
+      setOccupiedBeds(occupiedIndices);
+
       setFormData({
         room_number: room.room_number,
         building_number: room.building,
@@ -54,7 +72,7 @@ function EditRoomContent() {
         setPreviewUrl(room.image_url);
       }
     } else {
-      setError("Room not found");
+      toast.error("Room not found");
     }
     setIsLoading(false);
   };
@@ -70,12 +88,12 @@ function EditRoomContent() {
 
   const handleUpdate = async () => {
     if (!formData.room_number || !formData.price) {
-      setError("Room Number and Price are required");
+      toast.error("Room Number and Price are required");
       return;
     }
 
     setIsSaving(true);
-    setError(null);
+    setIsSaving(true);
 
     try {
       let image_url = previewUrl && !selectedFile ? previewUrl : null;
@@ -87,7 +105,7 @@ function EditRoomContent() {
         if (uploadResult.success) {
           image_url = uploadResult.url;
         } else {
-          setError(`Photo upload failed: ${uploadResult.error}`);
+          toast.error(`Photo upload failed: ${uploadResult.error}`);
           setIsSaving(false);
           return;
         }
@@ -95,16 +113,17 @@ function EditRoomContent() {
 
       const res = await updateRoom(roomId, { ...formData, image_url });
       if (res.success) {
+        toast.success("Room updated successfully");
         setShowSuccess(true);
         setTimeout(() => {
           router.push('/rooms?view=list');
           router.refresh();
         }, 1500);
       } else {
-        setError(res.error || "Failed to update room");
+        toast.error(res.error || "Failed to update room");
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      toast.error("An unexpected error occurred");
     } finally {
       setIsSaving(false);
     }
@@ -144,12 +163,6 @@ function EditRoomContent() {
               <span className="text-[12px] font-black text-[#00685F] uppercase tracking-widest">{formData.room_number}</span>
           </div>
         </header>
-
-        {error && (
-          <div className="mx-6 mt-6 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold animate-in fade-in slide-in-from-top-2">
-            {error}
-          </div>
-        )}
 
         <main className="px-6 py-4 space-y-10">
           <section className="space-y-6">
@@ -258,8 +271,14 @@ function EditRoomContent() {
                   </div>
                   <div className="flex items-center gap-6">
                      <button 
-                       onClick={() => setFormData(prev => ({...prev, capacity: Math.max(1, prev.capacity - 1)}))}
-                       className="w-12 h-12 bg-[#F1F4F8] rounded-2xl flex items-center justify-center text-[#1A2B28] active:scale-90 transition-transform"
+                       onClick={() => {
+                         if (formData.capacity <= minCapacity) {
+                           toast.error(`Cannot remove occupied beds (Bed ${minCapacity} is occupied)`);
+                           return;
+                         }
+                         setFormData(prev => ({...prev, capacity: Math.max(1, prev.capacity - 1)}));
+                       }}
+                       className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${formData.capacity <= minCapacity ? 'bg-slate-50 text-slate-300' : 'bg-[#F1F4F8] text-[#1A2B28] active:scale-90'}`}
                      >
                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                      </button>
@@ -275,10 +294,12 @@ function EditRoomContent() {
 
                <div className="space-y-4 mt-6">
                   <label className="text-[13px] font-black text-[#1A2B28] block pb-1 ml-1">Bed Identification</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {Array.from({ length: formData.capacity }).map((_, i) => (
-                       <div key={i} className="bg-white p-4 rounded-[22px] border border-slate-50 flex items-center gap-4 shadow-sm animate-in zoom-in-95 duration-300">
-                          <div className="bg-[#EBFBF8] p-2.5 rounded-xl text-[#00685F]">
+                   <div className="grid grid-cols-2 gap-3">
+                    {Array.from({ length: formData.capacity }).map((_, i) => {
+                       const isOccupied = occupiedBeds.includes(i + 1);
+                       return (
+                       <div key={i} className={`p-4 rounded-[22px] border flex items-center gap-4 shadow-sm animate-in zoom-in-95 duration-300 transition-all ${isOccupied ? 'bg-white border-teal-100 ring-1 ring-teal-50' : 'bg-white border-slate-50'}`}>
+                          <div className={`p-2.5 rounded-xl ${isOccupied ? 'bg-[#00685F] text-white shadow-lg shadow-teal-900/10' : 'bg-[#EBFBF8] text-[#00685F]'}`}>
                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M22 20v-2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2"/>
                                 <rect x="7" y="4" width="10" height="14" rx="3"/>
@@ -287,12 +308,13 @@ function EditRoomContent() {
                           </div>
                           <div className="flex flex-col">
                             <span className="text-[10px] font-black text-[#718096] uppercase tracking-wider">Bed {i+1}</span>
-                            <span className="text-[13px] font-black text-[#1A2B28]">
+                            <span className="text-[13px] font-black text-[#1A2B28] flex items-center gap-1.5">
                               {formData.building_number || '?'}-{formData.room_number || '?'}-{i+1}
+                              {isOccupied && <span className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse"></span>}
                             </span>
                           </div>
                        </div>
-                    ))}
+                    );})}
                   </div>
                </div>
             </div>

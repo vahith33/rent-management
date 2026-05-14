@@ -4,6 +4,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import ViewAllPGs from './ViewAllPGs'
 import AddNewPG from './AddNewPG'
 import DeletePG from './DeletePG'
+import { toast } from 'react-hot-toast'
 
 export default function AdminDashboardClient({ initialData, adminEmail }) {
   const searchParams = useSearchParams()
@@ -26,9 +27,11 @@ export default function AdminDashboardClient({ initialData, adminEmail }) {
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
         )
         await supabase.auth.signOut()
+        toast.success("Logged out successfully")
         router.push('/login')
     } catch(e) {
         console.error(e)
+        toast.error("Failed to logout. Please try again.")
         router.push('/login')
     }
   }

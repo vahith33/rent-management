@@ -34,13 +34,24 @@ export async function updateSession(request) {
   // Performance note: This call happens on EVERY request but it does NOT
   // block page rendering — middleware runs at the edge before the page loads.
   // The ~50ms overhead is worth it to keep the auth session fresh.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null;
+  let authError = null;
+  try {
+    const { data, error } = await supabase.auth.getUser()
+    user = data.user
+    authError = error
+  } catch (err) {
+    console.error("Middleware Auth Fetch Error:", err.message)
+    authError = err
+  }
 
-  // Optional: redirect unauthenticated users away from protected routes
+  // Only redirect if we definitely don't have a user AND it wasn't a network error
+  // If it's a 'fetch failed' error, we skip redirection to prevent aggressive logouts during network instability
+  const isNetworkError = authError?.message?.includes('fetch failed') || authError?.message?.includes('network');
+
   if (
     !user &&
+    !isNetworkError &&
     !request.nextUrl.pathname.startsWith('/login') &&
     !request.nextUrl.pathname.startsWith('/otp-verify') &&
     !request.nextUrl.pathname.startsWith('/auth') &&

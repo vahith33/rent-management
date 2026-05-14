@@ -5,13 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { classifyUser } from "@/actions/auth/classifyUser";
 import { Suspense } from 'react';
+import { toast } from "react-hot-toast";
 
 function OtpVerifyContent() {
   const router = useRouter();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const otpRefs = useRef([]);
   const [timer, setTimer] = useState(120);
 
@@ -43,10 +42,9 @@ function OtpVerifyContent() {
   const email = searchParams.get("email") || "";
 
   const handleVerify = async () => {
-    setError("");
     const enteredOtp = otp.join("");
     if (enteredOtp.length !== 6) {
-      setError("Please enter the full 6-digit code");
+      toast.error("Please enter the full 6-digit code");
       return;
     }
 
@@ -61,11 +59,11 @@ function OtpVerifyContent() {
 
     if (authError) {
       setIsLoading(false);
-      setError(authError.message);
+      toast.error(authError.message);
       return;
     }
 
-    setSuccess(true);
+    toast.success("Login successful! Welcome back.");
     
     // Use server action to determine where to go
     await classifyUser();
@@ -88,12 +86,6 @@ function OtpVerifyContent() {
             <button onClick={() => router.push("/login")} className="ml-2 text-[#008075] font-bold hover:underline decoration-2">Change</button>
           </p>
         </header>
-
-        {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm font-bold mb-6 animate-in fade-in zoom-in-95">
-            {error}
-          </div>
-        )}
 
         <div className="flex gap-2.5 mb-8 justify-center">
           {otp.map((digit, i) => (
@@ -144,19 +136,6 @@ function OtpVerifyContent() {
         </div>
       </div>
 
-      {success && (
-        <div className="fixed bottom-12 z-50 animate-in fade-in slide-in-from-bottom-12 duration-700 ease-out">
-          <div className="bg-[#2D333F] py-4.5 px-6 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center gap-4 min-w-[340px] border border-white/5 backdrop-blur-md">
-            <div className="bg-[#00D1B2] p-1.5 rounded-full shadow-[0_0_20px_rgba(0,209,178,0.5)]">
-               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <div className="flex flex-col">
-              <h3 className="text-white font-bold leading-none mb-1">Success</h3>
-              <p className="text-[#94A3B8] text-sm font-medium tracking-tight">Welcome back!</p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

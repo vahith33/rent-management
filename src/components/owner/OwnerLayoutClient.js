@@ -150,6 +150,14 @@ export default function OwnerLayoutClient({ children, ownerInfo }) {
                 onClick={() => {
                   const mainPages = ['/tenants', '/rooms', '/rent', '/notices', '/settings'];
                   if (mainPages.includes(pathname)) {
+                    const view = searchParams.get('view');
+                    // Specific fix for certain pages to go back instead of dashboard
+                    if ((pathname === '/rooms' && view === 'list') || 
+                        (pathname === '/tenants' && (view === 'list' || view === 'detail')) || 
+                        (pathname === '/rent' && (view === 'unpaid' || view === 'paid' || view === 'analytics'))) {
+                      router.back();
+                      return;
+                    }
                     router.push('/dashboard');
                   } else {
                     router.back();

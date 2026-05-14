@@ -150,7 +150,7 @@ export default function RentManagementPage() {
                               className="bg-[#008075] w-full rounded-t-lg transition-all duration-1000 relative shadow-[0_-4px_12px_rgba(0,104,95,0.1)]" 
                               style={{ height: `${Math.max((month.rent / (analyticsData?.target || month.value || 1)) * 100, 4)}%` }}
                             >
-                               <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-lg"></div>
+                               <div className="absolute top-0 left-0 right-0 h-1/2 bg-linear-to-b from-white/20 to-transparent rounded-t-lg"></div>
                             </div>
                         </div>
                       ))

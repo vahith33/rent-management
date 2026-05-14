@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createRoom, uploadRoomPhoto } from '@/actions/owner';
+import { toast } from 'react-hot-toast';
 
 export default function AddRoomPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isAddingAmenity, setIsAddingAmenity] = useState(false);
   const [newAmenityName, setNewAmenityName] = useState("");
@@ -34,12 +34,12 @@ export default function AddRoomPage() {
 
   const handleSave = async () => {
     if (!formData.room_number || !formData.price) {
-      setError("Room Number and Price are required");
+      toast.error("Room Number and Price are required");
       return;
     }
 
     setIsSaving(true);
-    setError(null);
+    setIsSaving(true);
 
     try {
       let image_url = null;
@@ -52,7 +52,7 @@ export default function AddRoomPage() {
         if (uploadResult.success) {
           image_url = uploadResult.url;
         } else {
-          setError(`Photo upload failed: ${uploadResult.error}`);
+          toast.error(`Photo upload failed: ${uploadResult.error}`);
           setIsSaving(false);
           return;
         }
@@ -63,17 +63,18 @@ export default function AddRoomPage() {
       const result = await createRoom({ ...formData, sharing_type, image_url });
       
       if (result.success) {
+        toast.success("Room created successfully");
         setShowSuccess(true);
         setTimeout(() => {
           router.push('/rooms');
           router.refresh();
         }, 1500);
       } else {
-        setError(result.error || "Failed to save room");
+        toast.error(result.error || "Failed to save room");
       }
     } catch (err) {
       console.error(err);
-      setError("An unexpected error occurred");
+      toast.error("An unexpected error occurred");
     } finally {
       setIsSaving(false);
     }
@@ -134,11 +135,6 @@ export default function AddRoomPage() {
   return (
     <div className="min-h-screen bg-white font-body relative">
       <div className={`transition-all duration-500 ${showSuccess ? 'blur-md scale-[0.98]' : ''}`}>
-        {error && (
-          <div className="mx-4 mt-4 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold animate-in fade-in slide-in-from-top-2">
-            {error}
-          </div>
-        )}
 
         <main className="px-2 ">
           {/* ROOM INFORMATION */}

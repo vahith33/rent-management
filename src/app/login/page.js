@@ -4,17 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { checkUserRegistration } from "@/actions/auth/checkUser";
+import { toast } from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleLoginContinue = async () => {
-    setError("");
     if (!email || !email.includes("@")) {
-      setError("Please enter a valid email address");
+      toast.error("Please enter a valid email address");
       return;
     }
 
@@ -25,7 +24,7 @@ export default function LoginPage() {
       const registration = await checkUserRegistration(email);
       
       if (!registration.registered) {
-        setError("This email is not registered. Please contact your property administrator.");
+        toast.error("This email is not registered. Please contact your property administrator.");
         setIsLoading(false);
         return;
       }
@@ -40,13 +39,14 @@ export default function LoginPage() {
       });
 
       if (authError) {
-        setError(authError.message);
+        toast.error(authError.message);
         setIsLoading(false);
       } else {
+        toast.success("Verification code sent to your email");
         router.push(`/otp-verify?email=${encodeURIComponent(email)}`);
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
       setIsLoading(false);
     }
   };
@@ -69,12 +69,6 @@ export default function LoginPage() {
         <h2 className="text-[20px] font-bold leading-tight text-[#1A2B28] font-heading">
           Welcome back!<br />Enter your email
         </h2>
-
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-bold animate-in fade-in zoom-in-95">
-            {error}
-          </div>
-        )}
 
         {/* Email Input */}
         <div className="space-y-2 mt-2">

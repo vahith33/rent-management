@@ -3,17 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "react-hot-toast";
 
 export default function ChangeEmailPage() {
   const router = useRouter();
   const [newEmail, setNewEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSendOtp = async () => {
-    setError("");
     if (!newEmail || !newEmail.includes("@")) {
-      setError("Please enter a valid email address");
+      toast.error("Please enter a valid email address");
       return;
     }
 
@@ -27,14 +26,15 @@ export default function ChangeEmailPage() {
       });
 
       if (updateError) {
-        setError(updateError.message);
+        toast.error(updateError.message);
         setIsLoading(false);
       } else {
+        toast.success("Verification code sent to your new email");
         // Redirect to verification page
         router.push(`/settings/change-email/verify?email=${encodeURIComponent(newEmail)}`);
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
       setIsLoading(false);
     }
   };
@@ -56,12 +56,6 @@ export default function ChangeEmailPage() {
             <h2 className="text-[22px] font-black text-[#1A2B28] leading-tight">Update your email</h2>
             <p className="text-[14px] font-medium text-[#718096]">We'll send a 6-digit verification code to your new email address.</p>
           </div>
-
-          {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold animate-in fade-in zoom-in-95">
-              {error}
-            </div>
-          )}
 
           <div className="space-y-4">
             <div className="space-y-2">

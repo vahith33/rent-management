@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createTenant, updateTenant } from '@/actions/owner';
+import { toast } from 'react-hot-toast';
 
 function AddTenantForm() {
   const router = useRouter();
@@ -31,7 +32,6 @@ function AddTenantForm() {
   });
 
   const [errors, setErrors] = useState({});
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     setMounted(true);
@@ -84,12 +84,12 @@ function AddTenantForm() {
 
   const handleSave = async () => {
     if (!validate()) {
-      setError("Please fill all mandatory fields (marked with *)");
+      toast.error("Please fill all mandatory fields (marked with *)");
       return;
     }
 
     setIsSaving(true);
-    setError(null);
+    setIsSaving(true);
     
     try {
       const result = editId 
@@ -97,16 +97,17 @@ function AddTenantForm() {
         : await createTenant(formData);
       
       if (result.success) {
+        toast.success(editId ? "Resident updated successfully" : "Resident onboarded successfully");
         setShowSuccess(true);
         setTimeout(() => {
           router.push(editId ? `/tenants?view=detail&id=${editId}` : '/tenants');
           router.refresh();
         }, 1500);
       } else {
-        setError(result.error || "Failed to save tenant");
+        toast.error(result.error || "Failed to save tenant");
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      toast.error("An unexpected error occurred");
     } finally {
       setIsSaving(false);
     }
@@ -141,11 +142,6 @@ function AddTenantForm() {
       )}
 
       <div className={`transition-all duration-500 ${showSuccess ? 'blur-xl scale-[0.95] opacity-40' : ''}`}>
-        {error && (
-          <div className="mx-6 mt-4 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold animate-in fade-in slide-in-from-top-2">
-            {error}
-          </div>
-        )}
 
       <main className="px-4 space-y-4  font-body">
         {/* PERSONAL DETAILS SECTION */}

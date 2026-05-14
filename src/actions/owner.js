@@ -12,7 +12,14 @@ export const getAuthenticatedOwnerId = cache(async function getAuthenticatedOwne
   const supabase = await createClient()
   
   // 1. Get user from Auth session
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch (err) {
+    console.error("Auth lookup failed (getAuthenticatedOwnerId):", err.message)
+  }
+  
   const adminSupabase = createServiceRoleClient()
 
   if (user?.id) {
@@ -218,6 +225,9 @@ export async function createTenant(tenantData) {
 
   if (tenantError) {
     console.error('Error creating tenant:', tenantError)
+    if (tenantError.code === '23505') {
+      return { success: false, error: "This mobile number is already registered" }
+    }
     return { success: false, error: tenantError.message }
   }
 
@@ -347,6 +357,9 @@ export async function updateTenant(tenantId, tenantData) {
 
   if (tenantError) {
     console.error('Error updating tenant:', tenantError)
+    if (tenantError.code === '23505') {
+      return { success: false, error: "This mobile number is already registered" }
+    }
     return { success: false, error: tenantError.message }
   }
 
