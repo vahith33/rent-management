@@ -1,9 +1,19 @@
 'use server'
 
 import { createServiceRoleClient } from '../lib/supabase/service'
+import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+async function checkAdmin() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user?.email !== process.env.ADMIN_EMAIL) {
+    throw new Error("Unauthorized: Admin access required")
+  }
+}
+
 export async function getAllPGs() {
+  await checkAdmin()
   const supabase = createServiceRoleClient()
 
   const { data, error } = await supabase
@@ -44,6 +54,7 @@ export async function getAllPGs() {
 }
 
 export async function addPG(formData) {
+  await checkAdmin()
   const name = formData.get('name')
   const email = formData.get('email')
   const phone = formData.get('phone')
@@ -112,6 +123,7 @@ export async function addPG(formData) {
 }
 
 export async function togglePGStatus(ownerId, currentStatus) {
+  await checkAdmin()
   const supabase = createServiceRoleClient()
   
   // Get supabase_user_id
@@ -135,6 +147,7 @@ export async function togglePGStatus(ownerId, currentStatus) {
 }
 
 export async function deletePG(ownerId) {
+  await checkAdmin()
   const supabase = createServiceRoleClient()
   
   // a. Get supabase_user_id
@@ -153,6 +166,7 @@ export async function deletePG(ownerId) {
 }
 
 export async function updatePG(ownerId, formData) {
+  await checkAdmin()
   const name = formData.get('name')
   const email = formData.get('email')
   const property_name = formData.get('property_name')
@@ -195,6 +209,7 @@ export async function updatePG(ownerId, formData) {
 }
 
 export async function getPGById(ownerId) {
+  await checkAdmin()
   const supabase = createServiceRoleClient()
 
   const { data: owner, error } = await supabase

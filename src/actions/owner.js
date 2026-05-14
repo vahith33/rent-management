@@ -11,39 +11,14 @@ import { createServiceRoleClient } from '@/lib/supabase/service'
 export const getAuthenticatedOwnerId = cache(async function getAuthenticatedOwnerId() {
   const supabase = await createClient()
   
-  // 1. Get user from Auth session
-  let user = null
-  try {
-    const { data } = await supabase.auth.getUser()
-    user = data.user
-  } catch (err) {
-    console.error("Auth lookup failed (getAuthenticatedOwnerId):", err.message)
-  }
-  
-  const adminSupabase = createServiceRoleClient()
+  // 1. Get session (faster than getUser as it doesn't verify with server every time)
+  const { data } = await supabase.auth.getSession()
+  const user = data.session?.user
 
   if (user?.id) {
-    // Optimization: Check if owner exists by ID directly (much faster than email search)
-    const { data: ownerData } = await adminSupabase
-      .from('owners')
-      .select('id')
-      .eq('id', user.id)
-      .single()
-      
-    if (ownerData) return ownerData.id
-    
-    // Fallback: search by email if ID doesn't match (for older accounts)
-    if (user.email) {
-      const { data: byEmail } = await adminSupabase
-        .from('owners')
-        .select('id')
-        .eq('email', user.email)
-        .single()
-      if (byEmail) return byEmail.id
-    }
+    return user.id
   }
 
-  // Final fallback: No auth found
   return null
 })
 
@@ -52,7 +27,7 @@ export async function getOwnerInfo() {
   
   const fetchOwnerInfo = unstable_cache(
     async (id) => {
-      const supabase = createServiceRoleClient()
+      const supabase = await createClient()
       const { data: owner } = await supabase
         .from('owners')
         .select('name, phone, email, properties(id, name)')
@@ -76,7 +51,7 @@ export async function getOwnerInfo() {
 }
 
 export async function updateOwnerProfile(data) {
-  const supabase = createServiceRoleClient()
+  const supabase = await createClient()
   
   // Try to get owner ID. Note: If email just changed, lookup might fail by email.
   // We'll pass the owner ID from the client if we're syncing after email change.
@@ -125,47 +100,34 @@ export async function getOwnerDashboardData() {
   
   const fetchData = unstable_cache(
     async (id) => {
-      const supabase = createServiceRoleClient()
-
-      // 1. Fetch Owner and Active Tenants first
-      const [ownerRes, tenantsListRes] = await Promise.all([
-        supabase.from('owners').select('name, phone, properties(id, name)').eq('id', id).single(),
-        supabase.from('tenants').select('id').eq('owner_id', id).eq('status', 'ACTIVE')
-      ])
-
-      const owner = ownerRes.data
-      const propertyIds = owner?.properties?.map(p => p.id) || []
-      const pg_name = owner?.properties?.[0]?.name || "My PG"
-      const activeTenantIds = tenantsListRes.data?.map(t => t.id) || []
-
-      if (propertyIds.length === 0) {
-        return {
-          owner: { name: owner?.name, phone: owner?.phone, pg_name },
-          stats: { totalTenants: 0, vacantBeds: 0, pendingRentCount: 0, monthlyIncome: "0", occupancyRate: 0 },
-          recentRent: []
-        }
-      }
-
-      // 2. Fetch all other data in parallel
+      const supabase = await createClient()
+      
       const currentMonthStart = new Date()
       currentMonthStart.setDate(1)
       currentMonthStart.setHours(0,0,0,0)
 
-      const [roomsRes, rentRes, incomeRes] = await Promise.all([
-        supabase.from('rooms').select('id, capacity, tenant_assignments(id, status)').in('property_id', propertyIds),
+      // Parallelize lookups with minimal payload
+      const [ownerRes, activeTenantsCount, roomsRes, rentRes, incomeRes] = await Promise.all([
+        supabase.from('owners').select('name, phone, properties(id, name)').eq('id', id).single(),
+        supabase.from('tenants').select('id', { count: 'exact', head: true }).eq('owner_id', id).eq('status', 'ACTIVE'),
+        supabase.from('rooms').select('capacity, tenant_assignments(status), properties!inner(owner_id)').eq('properties.owner_id', id),
         supabase.from('rent_payments')
-          .select('id, amount, status, due_date, tenants(name, phone, rent)')
-          .in('tenant_id', activeTenantIds)
+          .select('id, amount, status, due_date, tenants!inner(name, phone, owner_id)')
+          .eq('tenants.owner_id', id)
           .order('due_date', { ascending: false })
           .limit(10),
         supabase.from('rent_records')
-          .select('amount, eb_charges')
+          .select('amount, eb_charges, tenants!inner(owner_id)')
           .eq('status', 'PAID')
           .gte('paid_at', currentMonthStart.toISOString())
-          .in('tenant_id', activeTenantIds)
+          .eq('tenants.owner_id', id)
       ])
 
-      // 3. Process the results
+      const owner = ownerRes.data
+      const pg_name = owner?.properties?.[0]?.name || "My PG"
+      const totalTenants = activeTenantsCount.count || 0
+
+      // Process room and occupancy stats
       let totalBeds = 0
       let occupiedBeds = 0
       if (roomsRes.data) {
@@ -177,6 +139,7 @@ export async function getOwnerDashboardData() {
         })
       }
 
+      // Calculate financials
       const monthlyIncome = incomeRes.data?.reduce((sum, record) => sum + (record.amount || 0), 0) || 0
       const totalEB = incomeRes.data?.reduce((sum, record) => sum + (record.eb_charges || 0), 0) || 0
       const pendingRentCount = rentRes.data?.filter(r => r.status === 'UNPAID').length || 0
@@ -188,7 +151,7 @@ export async function getOwnerDashboardData() {
           pg_name: pg_name
         },
         stats: {
-          totalTenants: activeTenantIds.length,
+          totalTenants,
           vacantBeds: totalBeds - occupiedBeds,
           pendingRentCount,
           monthlyIncome: monthlyIncome.toLocaleString('en-IN'),
@@ -199,7 +162,7 @@ export async function getOwnerDashboardData() {
       }
     },
     ['owner-dashboard', ownerId],
-    { tags: ['dashboard', `dashboard-${ownerId}`], revalidate: 60 }
+    { tags: ['dashboard', `dashboard-${ownerId}`], revalidate: 300 } // 5 minute cache
   )
 
   return fetchData(ownerId)
@@ -207,7 +170,8 @@ export async function getOwnerDashboardData() {
 
 export async function createTenant(tenantData) {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
+  if (!ownerId) return { success: false, error: "Unauthorized" }
+  const supabase = await createClient()
   
   // 1. Create the tenant record
   const { roomId, bedId, ...profileData } = tenantData
@@ -291,7 +255,7 @@ export async function getTenants() {
   
   const fetchTenants = unstable_cache(
     async (id) => {
-      const supabase = createServiceRoleClient()
+      const supabase = await createClient()
       const { data, error } = await supabase
         .from('tenants')
         .select(`
@@ -341,7 +305,8 @@ export async function getTenants() {
 
 export async function updateTenant(tenantId, tenantData) {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
+  if (!ownerId) return { success: false, error: "Unauthorized" }
+  const supabase = await createClient()
   
   const { roomId, bedId, ...profileData } = tenantData
   
@@ -417,7 +382,8 @@ export async function updateTenant(tenantId, tenantData) {
 
 export async function removeTenant(tenantId) {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
+  if (!ownerId) return { success: false, error: "Unauthorized" }
+  const supabase = await createClient()
   
   // 1. Delete related records first to avoid foreign key violations
   await supabase.from('rent_records').delete().eq('tenant_id', tenantId)
@@ -446,7 +412,8 @@ export async function removeTenant(tenantId) {
 
 export async function createRoom(roomData) {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
+  if (!ownerId) return { success: false, error: "Unauthorized" }
+  const supabase = await createClient()
   
   // Fetch the owner's first property ID
   const { data: owner } = await supabase
@@ -486,7 +453,7 @@ export async function getRooms() {
   
   const fetchRooms = unstable_cache(
     async (id) => {
-      const supabase = createServiceRoleClient()
+      const supabase = await createClient()
       
       const { data, error } = await supabase
         .from('rooms')
@@ -543,7 +510,8 @@ export async function getRooms() {
 
 export async function removeRoom(roomId) {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
+  if (!ownerId) return { success: false, error: "Unauthorized" }
+  const supabase = await createClient()
   
   const { error } = await supabase
     .from('rooms')
@@ -563,7 +531,8 @@ export async function removeRoom(roomId) {
 
 export async function updateRoom(roomId, roomData) {
   const ownerId = await getAuthenticatedOwnerId()
-  const supabase = createServiceRoleClient()
+  if (!ownerId) return { success: false, error: "Unauthorized" }
+  const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('rooms')
@@ -591,7 +560,7 @@ export async function uploadRoomPhoto(formData) {
   const file = formData.get('file')
   if (!file) return { success: false, error: "No file provided" }
 
-  const supabase = createServiceRoleClient()
+  const supabase = await createClient()
   
   // 1. Ensure bucket exists
   const { data: buckets } = await supabase.storage.listBuckets()
@@ -634,7 +603,7 @@ export async function getRentPayments(status) {
   
   const fetchPayments = unstable_cache(
     async (id, pStatus) => {
-      const supabase = createServiceRoleClient()
+      const supabase = await createClient()
       
       const { data: tenants } = await supabase
         .from('tenants')
@@ -722,7 +691,7 @@ export async function getRentCounts() {
   
   const fetchCounts = unstable_cache(
     async (id) => {
-      const supabase = createServiceRoleClient()
+      const supabase = await createClient()
 
       const { data: tenants } = await supabase
         .from('tenants')
@@ -758,7 +727,9 @@ export async function getRentCounts() {
 }
 
 export async function updateRentPayment(paymentId, details) {
-  const supabase = createServiceRoleClient()
+  const ownerId = await getAuthenticatedOwnerId()
+  if (!ownerId) return { success: false, error: "Unauthorized" }
+  const supabase = await createClient()
   
   // 1. Fetch existing payment to check for partial payment
   const { data: existing, error: fetchError } = await supabase
@@ -851,39 +822,32 @@ export async function getRentAnalytics() {
   
   const fetchAnalytics = unstable_cache(
     async (id) => {
-      const supabase = createServiceRoleClient()
+      const supabase = await createClient()
+      const now = new Date()
+      const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
       
-      const [ownerRes, recordsRes] = await Promise.all([
-        supabase.from('owners').select('properties(id)').eq('id', id).single(),
+      // Parallelize ALL data fetching
+      const [ownerRes, recordsRes, roomsRes] = await Promise.all([
+        supabase.from('owners').select('name, properties(id, name)').eq('id', id).single(),
         supabase.from('rent_records')
-          .select(`
-            amount, 
-            eb_charges, 
-            paid_at,
-            tenants!inner(owner_id)
-          `)
+          .select('amount, eb_charges, paid_at, tenants!inner(owner_id)')
           .eq('tenants.owner_id', id)
           .eq('status', 'PAID')
-          .gte('paid_at', new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1).toISOString())
+          .gte('paid_at', sixMonthsAgo.toISOString()),
+        supabase.from('rooms')
+          .select('rent_per_bed, capacity, properties!inner(owner_id)')
+          .eq('properties.owner_id', id)
       ])
 
-      const propertyIds = ownerRes.data?.properties?.map(p => p.id) || []
       const allPaidRecords = recordsRes.data || []
+      const allRooms = roomsRes.data || []
 
-      let target = 0
-      if (propertyIds.length > 0) {
-        const { data: allRooms } = await supabase
-          .from('rooms')
-          .select('rent_per_bed, capacity')
-          .in('property_id', propertyIds)
+      // Calculate Target (Total potential rent)
+      const target = allRooms.reduce((sum, r) => 
+        sum + ((Number(r.rent_per_bed) || 0) * (Number(r.capacity) || 1)), 0) || 0
 
-        target = allRooms?.reduce((sum, r) => sum + ((Number(r.rent_per_bed) || 0) * (r.capacity || 1)), 0) || 0
-      }
-
-      const now = new Date()
-      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      
+      // Calculate Current Month Achieved
       const achieved = allPaidRecords
         .filter(r => new Date(r.paid_at) >= currentMonthStart)
         .reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
@@ -892,11 +856,13 @@ export async function getRentAnalytics() {
         .filter(r => new Date(r.paid_at) >= currentMonthStart)
         .reduce((sum, r) => sum + (Number(r.eb_charges) || 0), 0)
 
+      // Calculate Trend (Last 4 months)
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
       const trend = []
+      
       for (let i = 3; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
         const label = months[d.getMonth()]
-        
         const monthRent = allPaidRecords
           .filter(r => {
             const pDate = new Date(r.paid_at)
@@ -907,13 +873,14 @@ export async function getRentAnalytics() {
         trend.push({ label, value: monthRent, rent: monthRent, height: 0 })
       }
 
+      // Calculate relative heights for bar chart
       const maxVal = Math.max(...trend.map(t => t.value), target, 1)
       trend.forEach(t => t.height = (t.value / maxVal) * 100)
 
       return { target, achieved, ebAchieved, trend }
     },
     ['rent-analytics', ownerId],
-    { tags: ['rent', 'dashboard', `rent-${ownerId}`], revalidate: 60 }
+    { tags: ['rent', 'dashboard', `rent-${ownerId}`], revalidate: 300 } // 5 minute cache
   )
 
   return fetchAnalytics(ownerId)
