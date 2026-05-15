@@ -77,13 +77,26 @@ export default function WelcomeTenantPage() {
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="w-full max-w-[340px] mt-10">
+      {/* Action Buttons */}
+      <div className="w-full max-w-[340px] mt-10 space-y-4">
         <button 
           onClick={() => router.push('/my-residence')}
           className="w-full bg-[#00624E] py-5 rounded-[22px] text-white font-bold text-lg shadow-xl shadow-teal-900/20 active:scale-[0.98] transition-all hover:bg-[#004D3D]"
         >
           Manage Residence
+        </button>
+
+        <button 
+          onClick={async () => {
+            const { createClient } = await import('@/utils/supabase/client');
+            const supabase = createClient();
+            await supabase.auth.signOut();
+            router.push('/login');
+            router.refresh();
+          }}
+          className="w-full py-4 text-[#718096] font-bold text-sm hover:text-red-500 transition-colors"
+        >
+          Logout from Account
         </button>
       </div>
 

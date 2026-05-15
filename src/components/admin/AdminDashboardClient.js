@@ -21,14 +21,12 @@ export default function AdminDashboardClient({ initialData, adminEmail }) {
 
   const handleLogout = async () => {
     try {
-        const { createBrowserClient } = await import('@supabase/ssr')
-        const supabase = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-        )
+        const { createClient } = await import('@/utils/supabase/client')
+        const supabase = createClient()
         await supabase.auth.signOut()
         toast.success("Logged out successfully")
         router.push('/login')
+        router.refresh()
     } catch(e) {
         console.error(e)
         toast.error("Failed to logout. Please try again.")
