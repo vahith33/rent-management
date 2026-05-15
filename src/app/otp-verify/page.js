@@ -66,7 +66,8 @@ function OtpVerifyContent() {
     toast.success("Login successful! Welcome back.");
     
     // Use server action to determine where to go
-    await classifyUser();
+    const redirectPath = await classifyUser();
+    router.push(redirectPath);
   };
 
   return (

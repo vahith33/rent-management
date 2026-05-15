@@ -11,9 +11,8 @@ import { createServiceRoleClient } from '@/lib/supabase/service'
 export const getAuthenticatedOwnerId = cache(async function getAuthenticatedOwnerId() {
   const supabase = await createClient()
   
-  // 1. Get session (faster than getUser as it doesn't verify with server every time)
-  const { data } = await supabase.auth.getSession()
-  const user = data.session?.user
+  // Use getUser() for absolute certainty on authentication
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (user?.id) {
     return user.id
@@ -27,7 +26,8 @@ export async function getOwnerInfo() {
   
   const fetchOwnerInfo = unstable_cache(
     async (id) => {
-      const supabase = await createClient()
+      if (!id) return null
+      const supabase = createServiceRoleClient()
       const { data: owner } = await supabase
         .from('owners')
         .select('name, phone, email, properties(id, name)')
@@ -100,7 +100,8 @@ export async function getOwnerDashboardData() {
   
   const fetchData = unstable_cache(
     async (id) => {
-      const supabase = await createClient()
+      if (!id) return null
+      const supabase = createServiceRoleClient()
       
       const currentMonthStart = new Date()
       currentMonthStart.setDate(1)
@@ -255,7 +256,8 @@ export async function getTenants() {
   
   const fetchTenants = unstable_cache(
     async (id) => {
-      const supabase = await createClient()
+      if (!id) return []
+      const supabase = createServiceRoleClient()
       const { data, error } = await supabase
         .from('tenants')
         .select(`
@@ -453,7 +455,8 @@ export async function getRooms() {
   
   const fetchRooms = unstable_cache(
     async (id) => {
-      const supabase = await createClient()
+      if (!id) return []
+      const supabase = createServiceRoleClient()
       
       const { data, error } = await supabase
         .from('rooms')
@@ -603,7 +606,8 @@ export async function getRentPayments(status) {
   
   const fetchPayments = unstable_cache(
     async (id, pStatus) => {
-      const supabase = await createClient()
+      if (!id) return []
+      const supabase = createServiceRoleClient()
       
       const { data: tenants } = await supabase
         .from('tenants')
@@ -691,7 +695,8 @@ export async function getRentCounts() {
   
   const fetchCounts = unstable_cache(
     async (id) => {
-      const supabase = await createClient()
+      if (!id) return { paid: 0, unpaid: 0 }
+      const supabase = createServiceRoleClient()
 
       const { data: tenants } = await supabase
         .from('tenants')
